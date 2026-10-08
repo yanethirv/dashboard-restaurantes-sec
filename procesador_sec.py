@@ -6,7 +6,7 @@ import textwrap
 from deep_translator import GoogleTranslator, MyMemoryTranslator
 
 def process_financials():
-    tickers = ['CMG', 'MCD', 'QSR', 'DPZ', 'WEN', 'YUM', 'DRI', 'SHAK', 'SG']
+    tickers = ['CMG', 'UBER', 'DASH', 'QSR']
     data_financials = []
     data_profiles = []
 
