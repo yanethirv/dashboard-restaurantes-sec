@@ -453,68 +453,68 @@ with tab5:
             df_fin_ia = st.session_state['df_fin_ia']
             
             tab_ia, tab_visual = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)'])
-                    
-                    with tab_ia:
-                        respuesta_limpia = texto_ia.replace('$', r'\$')
-                        st.markdown(respuesta_limpia)
-                        
-                    with tab_visual:
-                        st.subheader("Modo Visual Simplificado")
-                        st.markdown("Los datos financieros clave explicados en lenguaje sencillo para un entendimiento general.")
-                        
-                        c1, c2 = st.columns(2)
-                        c3, c4 = st.columns(2)
-                        
-                        rev = df_sec_ia.get('Revenues', 0)
-                        cogs = df_sec_ia.get('CostOfGoodsAndServicesSold', 0)
-                        opex = df_fin_ia.get('Gastos_Operativos', 0)
-                        net = df_fin_ia.get('Utilidad_Neta', 0)
-                        
-                        c1.metric("Ingresos", f"${rev:,.0f}", help="Todo el dinero bruto que entró a la caja")
-                        c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
-                        c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
-                        c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
-                        
-                        st.markdown("---")
-                        
-                        # Gráfico de Cascada (Waterfall)
-                        fig_waterfall = go.Figure(go.Waterfall(
-                            name="P&L", orientation="v",
-                            measure=["relative", "relative", "relative", "total"],
-                            x=["Ingresos", "Costos de Venta", "Gastos Operativos", "Utilidad Neta"],
-                            textposition="outside",
-                            text=[f"${rev/1e6:,.0f}M", f"-${cogs/1e6:,.0f}M", f"-${opex/1e6:,.0f}M", f"${net/1e6:,.0f}M"],
-                            y=[rev, -cogs, -opex, net],
-                            connector={"line":{"color":"rgb(63, 63, 63)"}},
-                        ))
-                        fig_waterfall.update_layout(title="Cascada de Rentabilidad (P&L)", showlegend=False)
-                        st.plotly_chart(fig_waterfall, use_container_width=True)
-                        
-                        # Narrativa de los $100
-                        if rev > 0:
-                            x_val = (cogs / rev) * 100
-                            y_val = (opex / rev) * 100
-                            z_val = (net / rev) * 100
-                            narrativa = f"Para entender el negocio de {empresa_ia}: Por cada \\$100 de ingresos generados, la empresa destina \\${x_val:,.2f} a los costos directos del servicio y \\${y_val:,.2f} a mantener su estructura operativa. Al final, retiene \\${z_val:,.2f} de ganancia pura."
-                            st.info(narrativa)
-                        
-                        
-                        # Botón PPTX
-                        metricas_pptx = {
-                            'Revenues': rev,
-                            'CostOfGoodsAndServicesSold': cogs,
-                            'Gastos_Operativos': opex,
-                            'Utilidad_Neta': net
-                        }
-                        pptx_bytes = generar_pptx(empresa_ia, metricas_pptx)
-                        
-                        st.divider()
-                        st.download_button(
-                            label="📥 Descargar Presentación Ejecutiva (.pptx)",
-                            data=pptx_bytes,
-                            file_name=f"{empresa_ia.replace(' ', '_')}_Presentacion_Ejecutiva.pptx",
-                            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                        )
+            
+            with tab_ia:
+                respuesta_limpia = texto_ia.replace('$', r'\$')
+                st.markdown(respuesta_limpia)
+                
+            with tab_visual:
+                st.subheader("Modo Visual Simplificado")
+                st.markdown("Los datos financieros clave explicados en lenguaje sencillo para un entendimiento general.")
+                
+                c1, c2 = st.columns(2)
+                c3, c4 = st.columns(2)
+                
+                rev = df_sec_ia.get('Revenues', 0)
+                cogs = df_sec_ia.get('CostOfGoodsAndServicesSold', 0)
+                opex = df_fin_ia.get('Gastos_Operativos', 0)
+                net = df_fin_ia.get('Utilidad_Neta', 0)
+                
+                c1.metric("Ingresos", f"${rev:,.0f}", help="Todo el dinero bruto que entró a la caja")
+                c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
+                c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
+                c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
+                
+                st.markdown("---")
+                
+                # Gráfico de Cascada (Waterfall)
+                fig_waterfall = go.Figure(go.Waterfall(
+                    name="P&L", orientation="v",
+                    measure=["relative", "relative", "relative", "total"],
+                    x=["Ingresos", "Costos de Venta", "Gastos Operativos", "Utilidad Neta"],
+                    textposition="outside",
+                    text=[f"${rev/1e6:,.0f}M", f"-${cogs/1e6:,.0f}M", f"-${opex/1e6:,.0f}M", f"${net/1e6:,.0f}M"],
+                    y=[rev, -cogs, -opex, net],
+                    connector={"line":{"color":"rgb(63, 63, 63)"}},
+                ))
+                fig_waterfall.update_layout(title="Cascada de Rentabilidad (P&L)", showlegend=False)
+                st.plotly_chart(fig_waterfall, use_container_width=True)
+                
+                # Narrativa de los $100
+                if rev > 0:
+                    x_val = (cogs / rev) * 100
+                    y_val = (opex / rev) * 100
+                    z_val = (net / rev) * 100
+                    narrativa = f"Para entender el negocio de {empresa_ia}: Por cada \\$100 de ingresos generados, la empresa destina \\${x_val:,.2f} a los costos directos del servicio y \\${y_val:,.2f} a mantener su estructura operativa. Al final, retiene \\${z_val:,.2f} de ganancia pura."
+                    st.info(narrativa)
+                
+                
+                # Botón PPTX
+                metricas_pptx = {
+                    'Revenues': rev,
+                    'CostOfGoodsAndServicesSold': cogs,
+                    'Gastos_Operativos': opex,
+                    'Utilidad_Neta': net
+                }
+                pptx_bytes = generar_pptx(empresa_ia, metricas_pptx)
+                
+                st.divider()
+                st.download_button(
+                    label="📥 Descargar Presentación Ejecutiva (.pptx)",
+                    data=pptx_bytes,
+                    file_name=f"{empresa_ia.replace(' ', '_')}_Presentacion_Ejecutiva.pptx",
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                )
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
