@@ -471,22 +471,7 @@ with tab5:
                     st.info(narrativa)
                 
                 
-                # Botón de descarga de guion individual
-                metricas_guion = {
-                    'Revenues': rev,
-                    'CostOfGoodsAndServicesSold': cogs,
-                    'Gastos_Operativos': opex,
-                    'Utilidad_Neta': net
-                }
-                guion_str = generar_guion_diseno(empresa_ia, metricas_guion, texto_ia)
-                
                 st.divider()
-                st.download_button(
-                    label="📥 Descargar Guion para Diseño (.txt)",
-                    data=guion_str,
-                    file_name=f"{empresa_ia.replace(' ', '_')}_Guion_Canva.txt",
-                    mime="text/plain"
-                )
                 
             with tab_mercado:
                 st.subheader(f'📈 Valoración Bursátil (Tiempo Real)')
