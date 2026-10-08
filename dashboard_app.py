@@ -463,6 +463,15 @@ with tab5:
                 c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
                 c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
                 
+                ticker_seleccionado = df_fin_ia.get('Ticker', df_sec_ia.get('Ticker'))
+                from market_data import obtener_metricas_bursatiles
+                st.subheader('📈 Valoración de Mercado (Tiempo Real)')
+                metricas_mercado = obtener_metricas_bursatiles(ticker_seleccionado)
+                col_m1, col_m2, col_m3 = st.columns(3)
+                col_m1.metric("Precio Actual", metricas_mercado['precio'])
+                col_m2.metric("Market Cap", metricas_mercado['market_cap'])
+                col_m3.metric("P/E Ratio", metricas_mercado['pe_ratio'])
+                
                 st.markdown("---")
                 
                 # Gráfico de Cascada (Waterfall)

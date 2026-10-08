@@ -13,13 +13,14 @@ Utilidad Neta: $776,000,000
 Para entender el negocio de Restaurant Brands International: Por cada $100 de ingresos generados, la empresa destina $25.81 a los costos directos del servicio y $7.42 a mantener su estructura operativa. Al final, retiene $8.23 de ganancia pura.
 
 [DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
-INFORME DE INTELIGENCIA FINANCIERA Y DIAGNÓSTICO ESTRATÉGICO (NIVEL CFO / PRIVATE EQUITY)
+📊 INFORME DE INTELIGENCIA FINANCIERA ESTRATÉGICA (NIVEL CFO / PRIVATE EQUITY)
 
 Empresa: Restaurant Brands International (Ticker: QSR)
 
 Año Fiscal: 2025
 
-[DIAPOSITIVA 5: VALORACIÓN DE MERCADO]
+
+[DIAPOSITIVA 5: VALORACIÓN DE MERCADO ACTUAL]
 Precio Actual: $70.66
-Market Cap: $32.37 Billones
-P/E Ratio (Trailing): 17.75
+Market Cap: $32.37B
+P/E Ratio: 17.753769
