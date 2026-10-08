@@ -3,6 +3,7 @@ import json
 import re
 import pandas as pd
 import google.generativeai as genai
+import market_data
 
 # Configuración API
 # Intentamos obtenerla de streamlit secrets si es posible, o de una variable de entorno
@@ -28,7 +29,7 @@ def obtener_diagnostico_ia(superprompt, prompt_usuario):
     response = model.generate_content(prompt_completo)
     return response.text
 
-def generar_guion_diseno(empresa, metricas, diagnostico_ia):
+def generar_guion_diseno(empresa, metricas, diagnostico_ia, metricas_bursatiles):
     rev = metricas.get('Revenues', 0)
     narrativa = ""
     if rev > 0:
@@ -57,6 +58,11 @@ Utilidad Neta: ${metricas.get('Utilidad_Neta', 0):,.0f}
 
 [DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
 {conclusion_ia}
+
+[DIAPOSITIVA 5: VALORACIÓN DE MERCADO]
+Precio Actual: {metricas_bursatiles.get('precio_actual', 'N/A')}
+Market Cap: {metricas_bursatiles.get('market_cap', 'N/A')}
+P/E Ratio (Trailing): {metricas_bursatiles.get('pe_ratio', 'N/A')}
 """
     return guion
 
@@ -110,7 +116,10 @@ def main():
         print(f"Generando guion para {empresa} ({ticker})...")
         texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
         
-        guion = generar_guion_diseno(empresa, metricas_emp, texto_ia)
+        print(f"Obteniendo métricas bursátiles para {ticker}...")
+        metricas_bursatiles = market_data.obtener_metricas_bursatiles(ticker)
+        
+        guion = generar_guion_diseno(empresa, metricas_emp, texto_ia, metricas_bursatiles)
         
         file_path = os.path.join('guiones_para_canva', f"guion_{ticker}.txt")
         with open(file_path, "w", encoding="utf-8") as f:

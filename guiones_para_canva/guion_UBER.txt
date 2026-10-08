@@ -13,8 +13,13 @@ Utilidad Neta: $10,053,000,000
 Para entender el negocio de Uber Technologies, Inc.: Por cada $100 de ingresos generados, la empresa destina $60.25 a los costos directos del servicio y $29.06 a mantener su estructura operativa. Al final, retiene $19.33 de ganancia pura.
 
 [DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
-Como Director Financiero Senior (CFO) y Consultor de Inteligencia Financiera de nivel Private Equity, he procesado y analizado los datos financieros de Uber Technologies, Inc. para el año fiscal 2025.
+Como Director Financiero Senior (CFO) y Consultor de Inteligencia Financiera de nivel Private Equity, he procesado y analizado los datos financieros provistos para Uber Technologies, Inc. correspondientes a su ejercicio fiscal 2025 (con base en reportes regulatorios SEC 10-K y métricas de mercado).
 
-A continuación, presento el diagnóstico forense y estratégico estructurado bajo las 5 secciones del protocolo de alta dirección.
+A continuación, presento el diagnóstico financiero estratégico de alto nivel, estructurado para la revisión de un Comité de Inversión o Junta Directiva.
 
 ---
+
+[DIAPOSITIVA 5: VALORACIÓN DE MERCADO]
+Precio Actual: $70.24
+Market Cap: $143.47 Billones
+P/E Ratio (Trailing): 15.40
