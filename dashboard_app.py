@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from cfo_analyzer import IncomeStatement, calculate_comparative_kpis
 import google.generativeai as genai
 import json
@@ -84,6 +85,16 @@ def generar_pptx(nombre_empresa, metricas):
     
     p = tf.add_paragraph()
     p.text = f"Utilidad Neta: ${metricas.get('Utilidad_Neta', 0):,.0f} (Ganancia pura final después de todo)"
+    
+    # Calcular y añadir la narrativa de los $100
+    rev = metricas.get('Revenues', 0)
+    if rev > 0:
+        x = (metricas.get('CostOfGoodsAndServicesSold', 0) / rev) * 100
+        y = (metricas.get('Gastos_Operativos', 0) / rev) * 100
+        z = (metricas.get('Utilidad_Neta', 0) / rev) * 100
+        
+        p = tf.add_paragraph()
+        p.text = f"\nPara entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
     
     pptx_stream = io.BytesIO()
     prs.save(pptx_stream)
@@ -427,6 +438,30 @@ with tab5:
                         c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
                         c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
                         c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
+                        
+                        st.markdown("---")
+                        
+                        # Gráfico de Cascada (Waterfall)
+                        fig_waterfall = go.Figure(go.Waterfall(
+                            name="P&L", orientation="v",
+                            measure=["relative", "relative", "relative", "total"],
+                            x=["Ingresos", "Costos de Venta", "Gastos Operativos", "Utilidad Neta"],
+                            textposition="outside",
+                            text=[f"${rev/1e6:,.0f}M", f"-${cogs/1e6:,.0f}M", f"-${opex/1e6:,.0f}M", f"${net/1e6:,.0f}M"],
+                            y=[rev, -cogs, -opex, net],
+                            connector={"line":{"color":"rgb(63, 63, 63)"}},
+                        ))
+                        fig_waterfall.update_layout(title="Cascada de Rentabilidad (P&L)", showlegend=False)
+                        st.plotly_chart(fig_waterfall, use_container_width=True)
+                        
+                        # Narrativa de los $100
+                        if rev > 0:
+                            x_val = (cogs / rev) * 100
+                            y_val = (opex / rev) * 100
+                            z_val = (net / rev) * 100
+                            narrativa = f"Para entender el negocio de **{empresa_ia}**: Por cada **$100** de ingresos generados, la empresa destina **${x_val:,.2f}** a los costos directos del servicio y **${y_val:,.2f}** a mantener su estructura operativa. Al final, retiene **${z_val:,.2f}** de ganancia pura."
+                            st.info(narrativa)
+                        
                         
                         # Botón PPTX
                         metricas_pptx = {
