@@ -424,7 +424,7 @@ with tab5:
             df_sec_ia = st.session_state['df_sec_ia']
             df_fin_ia = st.session_state['df_fin_ia']
             
-            tab_ia, tab_visual, tab_mercado = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo'])
+            tab_ia, tab_visual, tab_mercado, tab_consumo = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo'])
             
             with tab_ia:
                 respuesta_limpia = texto_ia.replace('$', r'\$')
@@ -487,6 +487,19 @@ with tab5:
                 if isinstance(pe, (int, float)):
                     pe = round(pe, 2)
                 col3.metric("P/E Ratio (Trailing)", pe)
+                
+            with tab_consumo:
+                st.subheader("📊 Termómetro de Consumo")
+                from consumer_trends import obtener_tendencia_busqueda
+                
+                with st.spinner("Consultando Google Trends..."):
+                    df_trends, keyword = obtener_tendencia_busqueda(empresa_ia)
+                    
+                if not df_trends.empty:
+                    st.line_chart(df_trends[keyword])
+                    st.caption("Gráfico de popularidad de la marca basado en el volumen de búsquedas de Google en los últimos 12 meses (0-100)")
+                else:
+                    st.warning("Datos de tendencias no disponibles o límite de peticiones alcanzado (Rate Limit).")
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
