@@ -5,4 +5,4 @@ plotly
 deep-translator
 requests
 google-generativeai
-
+pytrends
