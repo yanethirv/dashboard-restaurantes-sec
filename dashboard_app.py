@@ -109,7 +109,7 @@ def generar_pptx(nombre_empresa, metricas):
         tf2.word_wrap = True
         
         p = tf2.add_paragraph()
-        p.text = f"VEREDICTO: Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
+        p.text = f"Síntesis Estratégica: Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
         p.font.size = Pt(18)
         p.font.bold = True
         p.font.italic = True
@@ -432,10 +432,27 @@ with tab5:
                     # 4. Generar usando caché para ahorrar llamadas a la API
                     texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
                     
-                    # 5. Renderizar
+                    # Guardar en session_state
+                    st.session_state['diagnostico_actual'] = texto_ia
+                    st.session_state['empresa_actual'] = empresa_ia
+                    st.session_state['df_sec_ia'] = df_sec_ia
+                    st.session_state['df_fin_ia'] = df_fin_ia
+                    
+                    # 5. Renderizar mensaje de éxito
                     st.success("Diagnóstico generado exitosamente.")
                     
-                    tab_ia, tab_visual = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)'])
+                except FileNotFoundError:
+                    st.error("No se encontró el archivo SUPERPROMPT_Analisis_Financiero_PyG.md.")
+                except Exception as e:
+                    st.error(f"Error durante la generación de IA: {e}")
+                    
+        # Fuera del botón, renderizar las pestañas si hay datos en estado
+        if st.session_state.get('diagnostico_actual') and st.session_state.get('empresa_actual') == empresa_ia:
+            texto_ia = st.session_state['diagnostico_actual']
+            df_sec_ia = st.session_state['df_sec_ia']
+            df_fin_ia = st.session_state['df_fin_ia']
+            
+            tab_ia, tab_visual = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)'])
                     
                     with tab_ia:
                         respuesta_limpia = texto_ia.replace('$', r'\$')
@@ -498,11 +515,6 @@ with tab5:
                             file_name=f"{empresa_ia.replace(' ', '_')}_Presentacion_Ejecutiva.pptx",
                             mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
                         )
-                    
-                except FileNotFoundError:
-                    st.error("No se encontró el archivo SUPERPROMPT_Analisis_Financiero_PyG.md.")
-                except Exception as e:
-                    st.error(f"Error durante la generación de IA: {e}")
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
