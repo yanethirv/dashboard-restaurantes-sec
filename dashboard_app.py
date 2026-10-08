@@ -4,6 +4,9 @@ import plotly.express as px
 from cfo_analyzer import IncomeStatement, calculate_comparative_kpis
 import google.generativeai as genai
 import json
+import io
+from pptx import Presentation
+from pptx.util import Inches, Pt
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -50,6 +53,42 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
         prompt_completo = f"INSTRUCCIONES DEL SISTEMA:\n{superprompt}\n\nMENSAJE DEL USUARIO:\n{prompt_usuario}"
         response = model.generate_content(prompt_completo)
         return response.text
+
+def generar_pptx(nombre_empresa, metricas):
+    prs = Presentation()
+    
+    # Diapositiva de título
+    title_slide_layout = prs.slide_layouts[0]
+    slide = prs.slides.add_slide(title_slide_layout)
+    title = slide.shapes.title
+    subtitle = slide.placeholders[1]
+    title.text = f"Resumen Ejecutivo: {nombre_empresa}"
+    subtitle.text = "Resultados Financieros Clave"
+    
+    # Diapositiva de resultados
+    bullet_slide_layout = prs.slide_layouts[1]
+    slide = prs.slides.add_slide(bullet_slide_layout)
+    shapes = slide.shapes
+    title_shape = shapes.title
+    body_shape = shapes.placeholders[1]
+    
+    title_shape.text = "Indicadores Financieros"
+    tf = body_shape.text_frame
+    tf.text = f"Ingresos: ${metricas.get('Revenues', 0):,.0f} (Todo el dinero bruto que entró a la caja)"
+    
+    p = tf.add_paragraph()
+    p.text = f"Costos de Venta (COGS): ${metricas.get('CostOfGoodsAndServicesSold', 0):,.0f} (Lo que costó directamente entregar el servicio/producto)"
+    
+    p = tf.add_paragraph()
+    p.text = f"Gastos Operativos (SG&A): ${metricas.get('Gastos_Operativos', 0):,.0f} (Costos de administración y operación)"
+    
+    p = tf.add_paragraph()
+    p.text = f"Utilidad Neta: ${metricas.get('Utilidad_Neta', 0):,.0f} (Ganancia pura final después de todo)"
+    
+    pptx_stream = io.BytesIO()
+    prs.save(pptx_stream)
+    pptx_stream.seek(0)
+    return pptx_stream
 
 df_fin = load_financial_data()
 df_prof = load_profile_data()
@@ -365,8 +404,46 @@ with tab5:
                     
                     # 5. Renderizar
                     st.success("Diagnóstico generado exitosamente.")
-                    respuesta_limpia = texto_ia.replace('$', r'\$')
-                    st.markdown(respuesta_limpia)
+                    
+                    tab_ia, tab_visual = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)'])
+                    
+                    with tab_ia:
+                        respuesta_limpia = texto_ia.replace('$', r'\$')
+                        st.markdown(respuesta_limpia)
+                        
+                    with tab_visual:
+                        st.subheader("Modo Visual Simplificado")
+                        st.markdown("Los datos financieros clave explicados en lenguaje sencillo para un entendimiento general.")
+                        
+                        c1, c2 = st.columns(2)
+                        c3, c4 = st.columns(2)
+                        
+                        rev = df_sec_ia.get('Revenues', 0)
+                        cogs = df_sec_ia.get('CostOfGoodsAndServicesSold', 0)
+                        opex = df_fin_ia.get('Gastos_Operativos', 0)
+                        net = df_fin_ia.get('Utilidad_Neta', 0)
+                        
+                        c1.metric("Ingresos", f"${rev:,.0f}", help="Todo el dinero bruto que entró a la caja")
+                        c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
+                        c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
+                        c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
+                        
+                        # Botón PPTX
+                        metricas_pptx = {
+                            'Revenues': rev,
+                            'CostOfGoodsAndServicesSold': cogs,
+                            'Gastos_Operativos': opex,
+                            'Utilidad_Neta': net
+                        }
+                        pptx_bytes = generar_pptx(empresa_ia, metricas_pptx)
+                        
+                        st.divider()
+                        st.download_button(
+                            label="📥 Descargar Presentación Ejecutiva (.pptx)",
+                            data=pptx_bytes,
+                            file_name=f"{empresa_ia.replace(' ', '_')}_Presentacion_Ejecutiva.pptx",
+                            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        )
                     
                 except FileNotFoundError:
                     st.error("No se encontró el archivo SUPERPROMPT_Analisis_Financiero_PyG.md.")
