@@ -9,6 +9,8 @@ import io
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import PP_ALIGN
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -59,62 +61,87 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
 def generar_pptx(nombre_empresa, metricas):
     prs = Presentation()
     
-    # Diapositiva de título
-    title_slide_layout = prs.slide_layouts[0]
-    slide = prs.slides.add_slide(title_slide_layout)
-    title = slide.shapes.title
-    subtitle = slide.placeholders[1]
-    title.text = f"Resumen Ejecutivo: {nombre_empresa}"
-    subtitle.text = "Resultados Financieros Clave"
+    # Diapositiva en blanco
+    blank_layout = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(blank_layout)
     
-    # Diapositiva de resultados (Title Only)
-    title_only_layout = prs.slide_layouts[5]
-    slide = prs.slides.add_slide(title_only_layout)
-    title_shape = slide.shapes.title
-    title_shape.text = "Indicadores Financieros"
+    # Título principal
+    txBox_title = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+    tf_title = txBox_title.text_frame
+    p_title = tf_title.add_paragraph()
+    p_title.text = f"Análisis Financiero - {nombre_empresa}"
+    p_title.font.size = Pt(28)
+    p_title.font.bold = True
+    p_title.font.color.rgb = RGBColor(0, 51, 102)
     
-    # Cuadro de texto para los KPIs
-    txBox = slide.shapes.add_textbox(Inches(1), Inches(1.5), Inches(8), Inches(4))
-    tf = txBox.text_frame
-    tf.clear()
+    # Tarjetas de Métricas (4 en fila)
+    card_width = Inches(2.1)
+    card_height = Inches(1.5)
+    start_y = Inches(2)
+    spacing = Inches(0.2)
     
-    def add_kpi(name, value, explanation):
-        p = tf.add_paragraph()
-        p.text = f"{name}: ${value:,.0f}"
-        p.font.size = Pt(24)
-        p.font.bold = True
+    kpis = [
+        {"name": "Ingresos", "value": metricas.get('Revenues', 0), "color": RGBColor(34, 139, 34)}, # Verde
+        {"name": "Costos de Venta", "value": metricas.get('CostOfGoodsAndServicesSold', 0), "color": RGBColor(255, 140, 0)}, # Naranja
+        {"name": "Gastos Operativos", "value": metricas.get('Gastos_Operativos', 0), "color": RGBColor(220, 20, 60)}, # Rojo
+        {"name": "Utilidad Neta", "value": metricas.get('Utilidad_Neta', 0), "color": RGBColor(30, 144, 255)} # Azul
+    ]
+    
+    for i, kpi in enumerate(kpis):
+        x_pos = Inches(0.4) + i * (card_width + spacing)
+        shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x_pos, start_y, card_width, card_height)
         
-        p_desc = tf.add_paragraph()
-        p_desc.text = explanation
-        p_desc.font.size = Pt(16)
-        p_desc.font.bold = False
+        # Color de fondo y borde
+        fill = shape.fill
+        fill.solid()
+        fill.fore_color.rgb = kpi["color"]
+        shape.line.color.rgb = kpi["color"]
         
-        tf.add_paragraph() # Espacio
+        # Texto dentro del shape
+        tf = shape.text_frame
+        tf.word_wrap = True
         
-    add_kpi("Ingresos", metricas.get('Revenues', 0), "Todo el dinero bruto que entró a la caja.")
-    add_kpi("Costos de Venta (COGS)", metricas.get('CostOfGoodsAndServicesSold', 0), "Lo que costó directamente entregar el servicio/producto.")
-    add_kpi("Gastos Operativos (SG&A)", metricas.get('Gastos_Operativos', 0), "Costos de administración y operación.")
-    add_kpi("Utilidad Neta", metricas.get('Utilidad_Neta', 0), "Ganancia pura final después de todo.")
-    
-    # Calcular y añadir la narrativa de los $100
+        p_name = tf.paragraphs[0]
+        p_name.text = kpi["name"]
+        p_name.font.size = Pt(14)
+        p_name.font.color.rgb = RGBColor(255, 255, 255)
+        p_name.alignment = PP_ALIGN.CENTER
+        
+        p_val = tf.add_paragraph()
+        p_val.text = f"${kpi['value']/1e9:,.2f} B" if kpi['value'] >= 1e9 else f"${kpi['value']/1e6:,.0f} M"
+        p_val.font.size = Pt(24)
+        p_val.font.bold = True
+        p_val.font.color.rgb = RGBColor(255, 255, 255)
+        p_val.alignment = PP_ALIGN.CENTER
+
+    # Caja de Síntesis
     rev = metricas.get('Revenues', 0)
     if rev > 0:
-        x = (metricas.get('CostOfGoodsAndServicesSold', 0) / rev) * 100
-        y = (metricas.get('Gastos_Operativos', 0) / rev) * 100
-        z = (metricas.get('Utilidad_Neta', 0) / rev) * 100
+        x_val = (metricas.get('CostOfGoodsAndServicesSold', 0) / rev) * 100
+        y_val = (metricas.get('Gastos_Operativos', 0) / rev) * 100
+        z_val = (metricas.get('Utilidad_Neta', 0) / rev) * 100
         
-        # Cuadro separado en la parte inferior
-        txBox2 = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(9), Inches(1.5))
-        tf2 = txBox2.text_frame
-        tf2.word_wrap = True
+        shape_narrativa = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.4), Inches(4.5), Inches(9.2), Inches(1.5))
         
-        p = tf2.add_paragraph()
-        p.text = f"Síntesis Estratégica: Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
-        p.font.size = Pt(18)
-        p.font.bold = True
-        p.font.italic = True
-        p.font.color.rgb = RGBColor(0, 51, 102)
-    
+        fill_narr = shape_narrativa.fill
+        fill_narr.solid()
+        fill_narr.fore_color.rgb = RGBColor(240, 248, 255) # AliceBlue
+        shape_narrativa.line.color.rgb = RGBColor(200, 200, 200)
+        
+        tf_narr = shape_narrativa.text_frame
+        tf_narr.word_wrap = True
+        
+        p_narr_title = tf_narr.paragraphs[0]
+        p_narr_title.text = "Síntesis Estratégica"
+        p_narr_title.font.size = Pt(16)
+        p_narr_title.font.bold = True
+        p_narr_title.font.color.rgb = RGBColor(0, 0, 0)
+        
+        p_narr_text = tf_narr.add_paragraph()
+        p_narr_text.text = f"Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x_val:,.2f} a los costos directos del servicio y ${y_val:,.2f} a mantener su estructura operativa. Al final, retiene ${z_val:,.2f} de ganancia pura."
+        p_narr_text.font.size = Pt(14)
+        p_narr_text.font.color.rgb = RGBColor(50, 50, 50)
+
     pptx_stream = io.BytesIO()
     prs.save(pptx_stream)
     pptx_stream.seek(0)
