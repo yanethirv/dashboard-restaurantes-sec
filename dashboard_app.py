@@ -8,6 +8,7 @@ import json
 import io
 import re
 import zipfile
+from market_data import obtener_metricas_bursatiles
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -303,6 +304,23 @@ with tab3:
             }),
             use_container_width=True
         )
+        
+        st.markdown("---")
+        with st.expander("📈 Valoración de Mercado (Tiempo Real)", expanded=True):
+            empresa_mkt = st.selectbox("Seleccione la Empresa para ver su valoración en tiempo real:", df_sec['Nombre_Empresa'].unique(), key="mkt_select")
+            ticker_mkt = df_sec[df_sec['Nombre_Empresa'] == empresa_mkt].iloc[0]['Ticker']
+            
+            try:
+                metricas_mkt = obtener_metricas_bursatiles(ticker_mkt)
+                if metricas_mkt.get('precio_actual') == 'N/A' and metricas_mkt.get('market_cap') == 'N/A':
+                    st.warning('Datos de mercado no disponibles temporalmente')
+                else:
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Precio Actual", metricas_mkt.get('precio_actual', 'N/A'))
+                    c2.metric("Market Cap", metricas_mkt.get('market_cap', 'N/A'))
+                    c3.metric("P/E Ratio (Trailing)", metricas_mkt.get('pe_ratio', 'N/A'))
+            except Exception:
+                st.warning('Datos de mercado no disponibles temporalmente')
 
 # ====================================================
 # TAB 4: Simulador CFO (What-If)
