@@ -506,9 +506,9 @@ with tab5:
                 
             with tab_mercado:
                 st.subheader(f'📈 Valoración Bursátil (Tiempo Real)')
-                ticker_seleccionado = df_fin_ia.get('Ticker', df_sec_ia.get('Ticker'))
+                ticker_real = df_sec[df_sec['Nombre_Empresa'] == empresa_ia]['Ticker'].iloc[0]
                 from market_data import obtener_metricas_bursatiles
-                metricas = obtener_metricas_bursatiles(ticker_seleccionado) 
+                metricas = obtener_metricas_bursatiles(ticker_real) 
                 
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Precio Actual", metricas.get('precio', 'N/A'))
@@ -517,7 +517,7 @@ with tab5:
                 pe = metricas.get('pe_ratio', 'N/A')
                 if isinstance(pe, (int, float)):
                     pe = round(pe, 2)
-                col3.metric("P/E Ratio", pe)
+                col3.metric("P/E Ratio (Trailing)", pe)
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
