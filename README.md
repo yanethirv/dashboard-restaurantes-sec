@@ -2,7 +2,7 @@
 
 Un ecosistema integral de análisis financiero y *Business Intelligence* diseñado para auditar, comparar y diagnosticar empresas del sector de restaurantes que cotizan en bolsa. Esta plataforma extrae datos oficiales de la SEC y los procesa a través de un motor de inferencia matemática propio, inyectando los resultados en un modelo de lenguaje de última generación (LLM) para generar reportes ejecutivos automatizados de nivel de Director Financiero (CFO).
 
-🚀 **Despliegue en vivo:** [(https://dashboard-restaurantes-sec.streamlit.app/)]
+🚀 **Despliegue en vivo:** [Ver el Dashboard en Streamlit](https://dashboard-restaurantes-sec.streamlit.app/)
 
 ---
 
