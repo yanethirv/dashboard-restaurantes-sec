@@ -8,6 +8,7 @@ import json
 import io
 from pptx import Presentation
 from pptx.util import Inches, Pt
+from pptx.dml.color import RGBColor
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -66,25 +67,34 @@ def generar_pptx(nombre_empresa, metricas):
     title.text = f"Resumen Ejecutivo: {nombre_empresa}"
     subtitle.text = "Resultados Financieros Clave"
     
-    # Diapositiva de resultados
-    bullet_slide_layout = prs.slide_layouts[1]
-    slide = prs.slides.add_slide(bullet_slide_layout)
-    shapes = slide.shapes
-    title_shape = shapes.title
-    body_shape = shapes.placeholders[1]
-    
+    # Diapositiva de resultados (Title Only)
+    title_only_layout = prs.slide_layouts[5]
+    slide = prs.slides.add_slide(title_only_layout)
+    title_shape = slide.shapes.title
     title_shape.text = "Indicadores Financieros"
-    tf = body_shape.text_frame
-    tf.text = f"Ingresos: ${metricas.get('Revenues', 0):,.0f} (Todo el dinero bruto que entró a la caja)"
     
-    p = tf.add_paragraph()
-    p.text = f"Costos de Venta (COGS): ${metricas.get('CostOfGoodsAndServicesSold', 0):,.0f} (Lo que costó directamente entregar el servicio/producto)"
+    # Cuadro de texto para los KPIs
+    txBox = slide.shapes.add_textbox(Inches(1), Inches(1.5), Inches(8), Inches(4))
+    tf = txBox.text_frame
+    tf.clear()
     
-    p = tf.add_paragraph()
-    p.text = f"Gastos Operativos (SG&A): ${metricas.get('Gastos_Operativos', 0):,.0f} (Costos de administración y operación)"
-    
-    p = tf.add_paragraph()
-    p.text = f"Utilidad Neta: ${metricas.get('Utilidad_Neta', 0):,.0f} (Ganancia pura final después de todo)"
+    def add_kpi(name, value, explanation):
+        p = tf.add_paragraph()
+        p.text = f"{name}: ${value:,.0f}"
+        p.font.size = Pt(24)
+        p.font.bold = True
+        
+        p_desc = tf.add_paragraph()
+        p_desc.text = explanation
+        p_desc.font.size = Pt(16)
+        p_desc.font.bold = False
+        
+        tf.add_paragraph() # Espacio
+        
+    add_kpi("Ingresos", metricas.get('Revenues', 0), "Todo el dinero bruto que entró a la caja.")
+    add_kpi("Costos de Venta (COGS)", metricas.get('CostOfGoodsAndServicesSold', 0), "Lo que costó directamente entregar el servicio/producto.")
+    add_kpi("Gastos Operativos (SG&A)", metricas.get('Gastos_Operativos', 0), "Costos de administración y operación.")
+    add_kpi("Utilidad Neta", metricas.get('Utilidad_Neta', 0), "Ganancia pura final después de todo.")
     
     # Calcular y añadir la narrativa de los $100
     rev = metricas.get('Revenues', 0)
@@ -93,8 +103,17 @@ def generar_pptx(nombre_empresa, metricas):
         y = (metricas.get('Gastos_Operativos', 0) / rev) * 100
         z = (metricas.get('Utilidad_Neta', 0) / rev) * 100
         
-        p = tf.add_paragraph()
-        p.text = f"\nPara entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
+        # Cuadro separado en la parte inferior
+        txBox2 = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(9), Inches(1.5))
+        tf2 = txBox2.text_frame
+        tf2.word_wrap = True
+        
+        p = tf2.add_paragraph()
+        p.text = f"VEREDICTO: Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x:,.2f} a los costos directos del servicio y ${y:,.2f} a mantener su estructura operativa. Al final, retiene ${z:,.2f} de ganancia pura."
+        p.font.size = Pt(18)
+        p.font.bold = True
+        p.font.italic = True
+        p.font.color.rgb = RGBColor(0, 51, 102)
     
     pptx_stream = io.BytesIO()
     prs.save(pptx_stream)
@@ -459,7 +478,7 @@ with tab5:
                             x_val = (cogs / rev) * 100
                             y_val = (opex / rev) * 100
                             z_val = (net / rev) * 100
-                            narrativa = f"Para entender el negocio de **{empresa_ia}**: Por cada **$100** de ingresos generados, la empresa destina **${x_val:,.2f}** a los costos directos del servicio y **${y_val:,.2f}** a mantener su estructura operativa. Al final, retiene **${z_val:,.2f}** de ganancia pura."
+                            narrativa = f"Para entender el negocio de {empresa_ia}: Por cada \\$100 de ingresos generados, la empresa destina \\${x_val:,.2f} a los costos directos del servicio y \\${y_val:,.2f} a mantener su estructura operativa. Al final, retiene \\${z_val:,.2f} de ganancia pura."
                             st.info(narrativa)
                         
                         
