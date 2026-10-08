@@ -440,7 +440,7 @@ with tab5:
             df_sec_ia = st.session_state['df_sec_ia']
             df_fin_ia = st.session_state['df_fin_ia']
             
-            tab_ia, tab_visual = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)'])
+            tab_ia, tab_visual, tab_mercado = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo'])
             
             with tab_ia:
                 respuesta_limpia = texto_ia.replace('$', r'\$')
@@ -462,15 +462,6 @@ with tab5:
                 c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
                 c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
                 c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
-                
-                ticker_seleccionado = df_fin_ia.get('Ticker', df_sec_ia.get('Ticker'))
-                from market_data import obtener_metricas_bursatiles
-                st.subheader('📈 Valoración de Mercado (Tiempo Real)')
-                metricas_mercado = obtener_metricas_bursatiles(ticker_seleccionado)
-                col_m1, col_m2, col_m3 = st.columns(3)
-                col_m1.metric("Precio Actual", metricas_mercado['precio'])
-                col_m2.metric("Market Cap", metricas_mercado['market_cap'])
-                col_m3.metric("P/E Ratio", metricas_mercado['pe_ratio'])
                 
                 st.markdown("---")
                 
@@ -512,6 +503,21 @@ with tab5:
                     file_name=f"{empresa_ia.replace(' ', '_')}_Guion_Canva.txt",
                     mime="text/plain"
                 )
+                
+            with tab_mercado:
+                st.subheader(f'📈 Valoración Bursátil (Tiempo Real)')
+                ticker_seleccionado = df_fin_ia.get('Ticker', df_sec_ia.get('Ticker'))
+                from market_data import obtener_metricas_bursatiles
+                metricas = obtener_metricas_bursatiles(ticker_seleccionado) 
+                
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Precio Actual", metricas.get('precio', 'N/A'))
+                col2.metric("Market Cap", metricas.get('market_cap', 'N/A'))
+                
+                pe = metricas.get('pe_ratio', 'N/A')
+                if isinstance(pe, (int, float)):
+                    pe = round(pe, 2)
+                col3.metric("P/E Ratio", pe)
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
