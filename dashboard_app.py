@@ -58,23 +58,21 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
         response = model.generate_content(prompt_completo)
         return response.text
 
-def generar_pptx(nombre_empresa, metricas):
+def generar_pptx(nombre_empresa, metricas, texto_ia):
     prs = Presentation()
     
-    # Diapositiva en blanco
-    blank_layout = prs.slide_layouts[6]
-    slide = prs.slides.add_slide(blank_layout)
+    # --- Diapositiva 1 (Portada) ---
+    slide_1 = prs.slides.add_slide(prs.slide_layouts[0])
+    title_1 = slide_1.shapes.title
+    subtitle_1 = slide_1.placeholders[1]
+    title_1.text = f"Reporte de Inteligencia Financiera: {nombre_empresa}"
+    subtitle_1.text = "Análisis de Rentabilidad y Estructura de Costos"
     
-    # Título principal
-    txBox_title = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
-    tf_title = txBox_title.text_frame
-    p_title = tf_title.add_paragraph()
-    p_title.text = f"Análisis Financiero - {nombre_empresa}"
-    p_title.font.size = Pt(28)
-    p_title.font.bold = True
-    p_title.font.color.rgb = RGBColor(0, 51, 102)
+    # --- Diapositiva 2 (Resumen de P&L) ---
+    slide_2 = prs.slides.add_slide(prs.slide_layouts[5])
+    title_2 = slide_2.shapes.title
+    title_2.text = "Indicadores Clave de Rendimiento"
     
-    # Tarjetas de Métricas (4 en fila)
     card_width = Inches(2.1)
     card_height = Inches(1.5)
     start_y = Inches(2)
@@ -89,15 +87,13 @@ def generar_pptx(nombre_empresa, metricas):
     
     for i, kpi in enumerate(kpis):
         x_pos = Inches(0.4) + i * (card_width + spacing)
-        shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x_pos, start_y, card_width, card_height)
+        shape = slide_2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x_pos, start_y, card_width, card_height)
         
-        # Color de fondo y borde
         fill = shape.fill
         fill.solid()
         fill.fore_color.rgb = kpi["color"]
         shape.line.color.rgb = kpi["color"]
         
-        # Texto dentro del shape
         tf = shape.text_frame
         tf.word_wrap = True
         
@@ -114,33 +110,40 @@ def generar_pptx(nombre_empresa, metricas):
         p_val.font.color.rgb = RGBColor(255, 255, 255)
         p_val.alignment = PP_ALIGN.CENTER
 
-    # Caja de Síntesis
+    # --- Diapositiva 3 (Eficiencia Operativa) ---
+    slide_3 = prs.slides.add_slide(prs.slide_layouts[1])
+    title_3 = slide_3.shapes.title
+    title_3.text = "Síntesis del Modelo de Negocio"
+    
+    body_3 = slide_3.placeholders[1]
+    tf_3 = body_3.text_frame
+    tf_3.clear()
+    
     rev = metricas.get('Revenues', 0)
     if rev > 0:
         x_val = (metricas.get('CostOfGoodsAndServicesSold', 0) / rev) * 100
         y_val = (metricas.get('Gastos_Operativos', 0) / rev) * 100
         z_val = (metricas.get('Utilidad_Neta', 0) / rev) * 100
         
-        shape_narrativa = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.4), Inches(4.5), Inches(9.2), Inches(1.5))
-        
-        fill_narr = shape_narrativa.fill
-        fill_narr.solid()
-        fill_narr.fore_color.rgb = RGBColor(240, 248, 255) # AliceBlue
-        shape_narrativa.line.color.rgb = RGBColor(200, 200, 200)
-        
-        tf_narr = shape_narrativa.text_frame
-        tf_narr.word_wrap = True
-        
-        p_narr_title = tf_narr.paragraphs[0]
-        p_narr_title.text = "Síntesis Estratégica"
-        p_narr_title.font.size = Pt(16)
-        p_narr_title.font.bold = True
-        p_narr_title.font.color.rgb = RGBColor(0, 0, 0)
-        
-        p_narr_text = tf_narr.add_paragraph()
-        p_narr_text.text = f"Para entender el negocio de {nombre_empresa}: Por cada $100 de ingresos generados, la empresa destina ${x_val:,.2f} a los costos directos del servicio y ${y_val:,.2f} a mantener su estructura operativa. Al final, retiene ${z_val:,.2f} de ganancia pura."
-        p_narr_text.font.size = Pt(14)
-        p_narr_text.font.color.rgb = RGBColor(50, 50, 50)
+        p_narrative = tf_3.add_paragraph()
+        p_narrative.text = f"Para entender el negocio de {nombre_empresa}:\n\nPor cada $100 de ingresos generados, la empresa destina ${x_val:,.2f} a los costos directos del servicio y ${y_val:,.2f} a mantener su estructura operativa. Al final, retiene ${z_val:,.2f} de ganancia pura."
+        p_narrative.font.size = Pt(28)
+        p_narrative.font.bold = True
+        p_narrative.font.color.rgb = RGBColor(0, 51, 102)
+
+    # --- Diapositiva 4 (Diagnóstico Estratégico IA) ---
+    slide_4 = prs.slides.add_slide(prs.slide_layouts[1])
+    title_4 = slide_4.shapes.title
+    title_4.text = "Análisis Forense (CFO)"
+    
+    body_4 = slide_4.placeholders[1]
+    tf_4 = body_4.text_frame
+    tf_4.clear()
+    tf_4.word_wrap = True
+    
+    p_ia = tf_4.add_paragraph()
+    p_ia.text = texto_ia
+    p_ia.font.size = Pt(14)
 
     pptx_stream = io.BytesIO()
     prs.save(pptx_stream)
@@ -533,7 +536,7 @@ with tab5:
                     'Gastos_Operativos': opex,
                     'Utilidad_Neta': net
                 }
-                pptx_bytes = generar_pptx(empresa_ia, metricas_pptx)
+                pptx_bytes = generar_pptx(empresa_ia, metricas_pptx, texto_ia)
                 
                 st.divider()
                 st.download_button(
