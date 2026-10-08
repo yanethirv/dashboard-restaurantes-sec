@@ -115,65 +115,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(['Benchmarking Financiero', 'Perfil del M
 with tab1:
     st.markdown("Comparativa de métricas clave (Último Año Fiscal Completo) y tendencias históricas.")
 
-    st.sidebar.header("Exportación para Diseño")
-    
-    # Exportar Guiones en ZIP
-    if not df_sec.empty and not df_fin.empty:
-        empresas = df_sec['Nombre_Empresa'].unique()
-        zip_buffer = io.BytesIO()
-        
-        # Leemos el superprompt si existe
-        try:
-            with open("SUPERPROMPT_Analisis_Financiero_PyG.md", "r", encoding="utf-8") as f:
-                superprompt = f.read()
-                
-            def preparar_zip():
-                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                    for emp in empresas:
-                        # Extraer datos de la empresa
-                        df_s = df_sec[df_sec['Nombre_Empresa'] == emp].iloc[0].to_dict()
-                        df_f_empresa = df_fin[df_fin['Nombre_Empresa'] == emp]
-                        idx_l = df_f_empresa['Año'].idxmax()
-                        df_f = df_fin.loc[idx_l].to_dict()
-                        
-                        metricas_emp = {
-                            'Revenues': df_s.get('Revenues', 0),
-                            'CostOfGoodsAndServicesSold': df_s.get('CostOfGoodsAndServicesSold', 0),
-                            'Gastos_Operativos': df_f.get('Gastos_Operativos', 0),
-                            'Utilidad_Neta': df_f.get('Utilidad_Neta', 0)
-                        }
-                        
-                        contexto = {
-                            "Empresa": emp,
-                            "Datos_Auditoria_SEC_10K": {k: v for k, v in df_s.items() if pd.notna(v)},
-                            "KPIs_Mercado_Finanzas": {k: v for k, v in df_f.items() if pd.notna(v)}
-                        }
-                        prompt_usuario = f"Aplica el SUPERPROMPT a los siguientes datos de {emp}:\n\n{json.dumps(contexto, indent=2, ensure_ascii=False)}"
-                        
-                        texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
-                        
-                        guion = generar_guion_diseno(emp, metricas_emp, texto_ia)
-                        
-                        zip_file.writestr(f"{emp.replace(' ', '_')}_Guion_Canva.txt", guion)
-                
-            if st.sidebar.button("📥 Descargar Carpeta para Diseño (4 Empresas)"):
-                with st.spinner("Generando análisis y guiones..."):
-                    try:
-                        api_key = st.secrets["GEMINI_API_KEY"]
-                        genai.configure(api_key=api_key)
-                        preparar_zip()
-                        st.sidebar.download_button(
-                            label="Haz clic para guardar el .zip",
-                            data=zip_buffer.getvalue(),
-                            file_name="Guiones_Diseno_Canva.zip",
-                            mime="application/zip"
-                        )
-                    except Exception as e:
-                        st.sidebar.error(f"Error generando ZIP: {e}")
-        except FileNotFoundError:
-            st.sidebar.error("Falta el SUPERPROMPT.")
 
-    st.sidebar.markdown("---")
     st.sidebar.header("Filtros Interactivos")
     all_tickers = df_fin['Ticker'].unique().tolist()
 

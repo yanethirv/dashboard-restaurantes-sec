@@ -1,0 +1,20 @@
+[DIAPOSITIVA 1: PORTADA]
+Título: Reporte de Inteligencia Financiera
+Empresa: Chipotle Mexican Grill, Inc.
+Año: 2025
+
+[DIAPOSITIVA 2: KPIs FINANCIEROS]
+Ingresos Totales: $11,925,601,000
+Costos de Venta: $1,535,428,000
+Gastos Operativos: $1,013,399,000
+Utilidad Neta: $1,535,761,000
+
+[DIAPOSITIVA 3: SÍNTESIS DE NEGOCIO]
+Para entender el negocio de Chipotle Mexican Grill, Inc.: Por cada $100 de ingresos generados, la empresa destina $12.88 a los costos directos del servicio y $8.50 a mantener su estructura operativa. Al final, retiene $12.88 de ganancia pura.
+
+[DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
+Como Director Financiero Senior (CFO) y Consultor de Inteligencia Financiera de nivel Private Equity, he procesado y analizado los datos financieros proporcionados de Chipotle Mexican Grill, Inc. (Ticker: CMG) para el año fiscal 2025.
+
+Dado que el set de datos provisto es un resumen a nivel ejecutivo de los reportes SEC 10-K, he estructurado el análisis forense y estratégico con base en las partidas disponibles: Ingresos Totales ($11,925,601,000), Costo de Ventas y Servicios ($1,535,428,000), Gastos Operativos / OPEX ($1,013,399,000) y Utilidad Neta ($1,535,761,000).
+
+(Nota metodológica: Para calcular partidas intermedias como EBITDA y EBIT con precisión exacta se requeriría el desglose de depreciación, amortización, gastos financieros e impuestos. No obstante, realizaremos inferencias financieras de nivel directivo con la información disponible).

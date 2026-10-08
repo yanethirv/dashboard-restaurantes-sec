@@ -1,0 +1,20 @@
+[DIAPOSITIVA 1: PORTADA]
+Título: Reporte de Inteligencia Financiera
+Empresa: DoorDash, Inc.
+Año: 2025
+
+[DIAPOSITIVA 2: KPIs FINANCIEROS]
+Ingresos Totales: $13,717,000,000
+Costos de Venta: $6,738,000,000
+Gastos Operativos: $6,254,000,000
+Utilidad Neta: $935,000,000
+
+[DIAPOSITIVA 3: SÍNTESIS DE NEGOCIO]
+Para entender el negocio de DoorDash, Inc.: Por cada $100 de ingresos generados, la empresa destina $49.12 a los costos directos del servicio y $45.59 a mantener su estructura operativa. Al final, retiene $6.82 de ganancia pura.
+
+[DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
+Actuando como Director Financiero Senior (CFO) y Consultor de Inteligencia Financiera de nivel Private Equity, presento a continuación el análisis forense, estratégico y estructural del Estado de Resultados (P&L) de DoorDash, Inc. (Ticker: DASH) para el año fiscal 2025, basado en los datos provistos.
+
+---
+
+SECCIÓN 1: RADIOGRAFÍA ESTRUCTURAL Y ANÁLISIS VERTICAL / HORIZONTAL

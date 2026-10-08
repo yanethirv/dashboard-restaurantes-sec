@@ -1,0 +1,20 @@
+[DIAPOSITIVA 1: PORTADA]
+Título: Reporte de Inteligencia Financiera
+Empresa: Restaurant Brands International
+Año: 2025
+
+[DIAPOSITIVA 2: KPIs FINANCIEROS]
+Ingresos Totales: $9,434,000,000
+Costos de Venta: $2,435,000,000
+Gastos Operativos: $700,000,000
+Utilidad Neta: $776,000,000
+
+[DIAPOSITIVA 3: SÍNTESIS DE NEGOCIO]
+Para entender el negocio de Restaurant Brands International: Por cada $100 de ingresos generados, la empresa destina $25.81 a los costos directos del servicio y $7.42 a mantener su estructura operativa. Al final, retiene $8.23 de ganancia pura.
+
+[DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
+Actuando como Director Financiero Senior (CFO) y Consultor de Inteligencia Financiera de nivel Private Equity, he procesado los datos financieros provistos para Restaurant Brands International (QSR) correspondientes al año fiscal 2025.
+
+Nota metodológica del CFO: A partir de la información estructurada, se identifican las principales líneas del P&L: Ingresos Totales ($9,434M), Costos Directos de Bienes y Servicios ($2,435M), Gastos Operativos/SG&A ($700M), y Utilidad Neta ($776M). Dado que no se desglosan explícitamente en el extracto los rubros intermedios (como el EBITDA, EBIT o Gastos Financieros/Impuestos exactos), se realizarán las estimaciones financieras estándar de la industria de QSR para completar el diagnóstico forense.
+
+---
