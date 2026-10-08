@@ -6,11 +6,8 @@ from cfo_analyzer import IncomeStatement, calculate_comparative_kpis
 import google.generativeai as genai
 import json
 import io
-from pptx import Presentation
-from pptx.util import Inches, Pt
-from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN
+import re
+import zipfile
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -58,97 +55,39 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
         response = model.generate_content(prompt_completo)
         return response.text
 
-def generar_pptx(nombre_empresa, metricas, texto_ia):
-    prs = Presentation()
-    
-    # --- Diapositiva 1 (Portada) ---
-    slide_1 = prs.slides.add_slide(prs.slide_layouts[0])
-    title_1 = slide_1.shapes.title
-    subtitle_1 = slide_1.placeholders[1]
-    title_1.text = f"Reporte de Inteligencia Financiera: {nombre_empresa}"
-    subtitle_1.text = "Análisis de Rentabilidad y Estructura de Costos"
-    
-    # --- Diapositiva 2 (Resumen de P&L) ---
-    slide_2 = prs.slides.add_slide(prs.slide_layouts[5])
-    title_2 = slide_2.shapes.title
-    title_2.text = "Indicadores Clave de Rendimiento"
-    
-    card_width = Inches(2.1)
-    card_height = Inches(1.5)
-    start_y = Inches(2)
-    spacing = Inches(0.2)
-    
-    kpis = [
-        {"name": "Ingresos", "value": metricas.get('Revenues', 0), "color": RGBColor(34, 139, 34)}, # Verde
-        {"name": "Costos de Venta", "value": metricas.get('CostOfGoodsAndServicesSold', 0), "color": RGBColor(255, 140, 0)}, # Naranja
-        {"name": "Gastos Operativos", "value": metricas.get('Gastos_Operativos', 0), "color": RGBColor(220, 20, 60)}, # Rojo
-        {"name": "Utilidad Neta", "value": metricas.get('Utilidad_Neta', 0), "color": RGBColor(30, 144, 255)} # Azul
-    ]
-    
-    for i, kpi in enumerate(kpis):
-        x_pos = Inches(0.4) + i * (card_width + spacing)
-        shape = slide_2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x_pos, start_y, card_width, card_height)
-        
-        fill = shape.fill
-        fill.solid()
-        fill.fore_color.rgb = kpi["color"]
-        shape.line.color.rgb = kpi["color"]
-        
-        tf = shape.text_frame
-        tf.word_wrap = True
-        
-        p_name = tf.paragraphs[0]
-        p_name.text = kpi["name"]
-        p_name.font.size = Pt(14)
-        p_name.font.color.rgb = RGBColor(255, 255, 255)
-        p_name.alignment = PP_ALIGN.CENTER
-        
-        p_val = tf.add_paragraph()
-        p_val.text = f"${kpi['value']/1e9:,.2f} B" if kpi['value'] >= 1e9 else f"${kpi['value']/1e6:,.0f} M"
-        p_val.font.size = Pt(24)
-        p_val.font.bold = True
-        p_val.font.color.rgb = RGBColor(255, 255, 255)
-        p_val.alignment = PP_ALIGN.CENTER
-
-    # --- Diapositiva 3 (Eficiencia Operativa) ---
-    slide_3 = prs.slides.add_slide(prs.slide_layouts[1])
-    title_3 = slide_3.shapes.title
-    title_3.text = "Síntesis del Modelo de Negocio"
-    
-    body_3 = slide_3.placeholders[1]
-    tf_3 = body_3.text_frame
-    tf_3.clear()
-    
+def generar_guion_diseno(empresa, metricas, diagnostico_ia):
+    # Calcular y añadir la narrativa de los $100
     rev = metricas.get('Revenues', 0)
+    narrativa = ""
     if rev > 0:
         x_val = (metricas.get('CostOfGoodsAndServicesSold', 0) / rev) * 100
         y_val = (metricas.get('Gastos_Operativos', 0) / rev) * 100
         z_val = (metricas.get('Utilidad_Neta', 0) / rev) * 100
-        
-        p_narrative = tf_3.add_paragraph()
-        p_narrative.text = f"Para entender el negocio de {nombre_empresa}:\n\nPor cada $100 de ingresos generados, la empresa destina ${x_val:,.2f} a los costos directos del servicio y ${y_val:,.2f} a mantener su estructura operativa. Al final, retiene ${z_val:,.2f} de ganancia pura."
-        p_narrative.font.size = Pt(28)
-        p_narrative.font.bold = True
-        p_narrative.font.color.rgb = RGBColor(0, 51, 102)
-
-    # --- Diapositiva 4 (Diagnóstico Estratégico IA) ---
-    slide_4 = prs.slides.add_slide(prs.slide_layouts[1])
-    title_4 = slide_4.shapes.title
-    title_4.text = "Análisis Forense (CFO)"
+        narrativa = f"Para entender el negocio de {empresa}: Por cada $100 de ingresos generados, la empresa destina ${x_val:,.2f} a los costos directos del servicio y ${y_val:,.2f} a mantener su estructura operativa. Al final, retiene ${z_val:,.2f} de ganancia pura."
     
-    body_4 = slide_4.placeholders[1]
-    tf_4 = body_4.text_frame
-    tf_4.clear()
-    tf_4.word_wrap = True
+    # Limpieza de IA
+    texto_limpio = re.sub(r'[*#]', '', diagnostico_ia)
+    parrafos = [p.strip() for p in texto_limpio.split('\n') if p.strip()]
+    conclusion_ia = '\n\n'.join(parrafos[:3]) # Tomar los primeros 3 párrafos
     
-    p_ia = tf_4.add_paragraph()
-    p_ia.text = texto_ia
-    p_ia.font.size = Pt(14)
+    guion = f"""[DIAPOSITIVA 1: PORTADA]
+Título: Reporte de Inteligencia Financiera
+Empresa: {empresa}
+Año: 2025
 
-    pptx_stream = io.BytesIO()
-    prs.save(pptx_stream)
-    pptx_stream.seek(0)
-    return pptx_stream
+[DIAPOSITIVA 2: KPIs FINANCIEROS]
+Ingresos Totales: ${metricas.get('Revenues', 0):,.0f}
+Costos de Venta: ${metricas.get('CostOfGoodsAndServicesSold', 0):,.0f}
+Gastos Operativos: ${metricas.get('Gastos_Operativos', 0):,.0f}
+Utilidad Neta: ${metricas.get('Utilidad_Neta', 0):,.0f}
+
+[DIAPOSITIVA 3: SÍNTESIS DE NEGOCIO]
+{narrativa}
+
+[DIAPOSITIVA 4: ANÁLISIS FORENSE CFO]
+{conclusion_ia}
+"""
+    return guion
 
 df_fin = load_financial_data()
 df_prof = load_profile_data()
@@ -176,6 +115,65 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(['Benchmarking Financiero', 'Perfil del M
 with tab1:
     st.markdown("Comparativa de métricas clave (Último Año Fiscal Completo) y tendencias históricas.")
 
+    st.sidebar.header("Exportación para Diseño")
+    
+    # Exportar Guiones en ZIP
+    if not df_sec.empty and not df_fin.empty:
+        empresas = df_sec['Nombre_Empresa'].unique()
+        zip_buffer = io.BytesIO()
+        
+        # Leemos el superprompt si existe
+        try:
+            with open("SUPERPROMPT_Analisis_Financiero_PyG.md", "r", encoding="utf-8") as f:
+                superprompt = f.read()
+                
+            def preparar_zip():
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                    for emp in empresas:
+                        # Extraer datos de la empresa
+                        df_s = df_sec[df_sec['Nombre_Empresa'] == emp].iloc[0].to_dict()
+                        df_f_empresa = df_fin[df_fin['Nombre_Empresa'] == emp]
+                        idx_l = df_f_empresa['Año'].idxmax()
+                        df_f = df_fin.loc[idx_l].to_dict()
+                        
+                        metricas_emp = {
+                            'Revenues': df_s.get('Revenues', 0),
+                            'CostOfGoodsAndServicesSold': df_s.get('CostOfGoodsAndServicesSold', 0),
+                            'Gastos_Operativos': df_f.get('Gastos_Operativos', 0),
+                            'Utilidad_Neta': df_f.get('Utilidad_Neta', 0)
+                        }
+                        
+                        contexto = {
+                            "Empresa": emp,
+                            "Datos_Auditoria_SEC_10K": {k: v for k, v in df_s.items() if pd.notna(v)},
+                            "KPIs_Mercado_Finanzas": {k: v for k, v in df_f.items() if pd.notna(v)}
+                        }
+                        prompt_usuario = f"Aplica el SUPERPROMPT a los siguientes datos de {emp}:\n\n{json.dumps(contexto, indent=2, ensure_ascii=False)}"
+                        
+                        texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
+                        
+                        guion = generar_guion_diseno(emp, metricas_emp, texto_ia)
+                        
+                        zip_file.writestr(f"{emp.replace(' ', '_')}_Guion_Canva.txt", guion)
+                
+            if st.sidebar.button("📥 Descargar Carpeta para Diseño (4 Empresas)"):
+                with st.spinner("Generando análisis y guiones..."):
+                    try:
+                        api_key = st.secrets["GEMINI_API_KEY"]
+                        genai.configure(api_key=api_key)
+                        preparar_zip()
+                        st.sidebar.download_button(
+                            label="Haz clic para guardar el .zip",
+                            data=zip_buffer.getvalue(),
+                            file_name="Guiones_Diseno_Canva.zip",
+                            mime="application/zip"
+                        )
+                    except Exception as e:
+                        st.sidebar.error(f"Error generando ZIP: {e}")
+        except FileNotFoundError:
+            st.sidebar.error("Falta el SUPERPROMPT.")
+
+    st.sidebar.markdown("---")
     st.sidebar.header("Filtros Interactivos")
     all_tickers = df_fin['Ticker'].unique().tolist()
 
@@ -529,21 +527,21 @@ with tab5:
                     st.info(narrativa)
                 
                 
-                # Botón PPTX
-                metricas_pptx = {
+                # Botón de descarga de guion individual
+                metricas_guion = {
                     'Revenues': rev,
                     'CostOfGoodsAndServicesSold': cogs,
                     'Gastos_Operativos': opex,
                     'Utilidad_Neta': net
                 }
-                pptx_bytes = generar_pptx(empresa_ia, metricas_pptx, texto_ia)
+                guion_str = generar_guion_diseno(empresa_ia, metricas_guion, texto_ia)
                 
                 st.divider()
                 st.download_button(
-                    label="📥 Descargar Presentación Ejecutiva (.pptx)",
-                    data=pptx_bytes,
-                    file_name=f"{empresa_ia.replace(' ', '_')}_Presentacion_Ejecutiva.pptx",
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                    label="📥 Descargar Guion para Diseño (.txt)",
+                    data=guion_str,
+                    file_name=f"{empresa_ia.replace(' ', '_')}_Guion_Canva.txt",
+                    mime="text/plain"
                 )
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
