@@ -4,6 +4,6 @@ streamlit
 plotly
 deep-translator
 requests
-google-generativeai
+google-generativeai>=0.5.2
 pytrends
 pandas-datareader
