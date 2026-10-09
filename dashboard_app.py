@@ -57,6 +57,18 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
         response = model.generate_content(prompt_completo)
         return response.text
 
+@st.cache_data(show_spinner=False)
+def analizar_sentimiento_mercado(texto_noticias: str, empresa: str) -> str:
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"Actúa como un analista de riesgos de fondos de cobertura. Lee los siguientes titulares y noticias recientes sobre {empresa}:\n\n{texto_noticias}\n\nTu tarea: 1) Define el Sentimiento del Mercado actual en una palabra (Alcista, Bajista o Neutral). 2) Enumera en 3 viñetas muy concisas los principales riesgos, retos u oportunidades operativas que enfrenta la empresa según estas noticias."
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error en el análisis de sentimiento: {e}"
+
 def generar_guion_diseno(empresa, metricas, diagnostico_ia):
     # Calcular y añadir la narrativa de los $100
     rev = metricas.get('Revenues', 0)
@@ -109,12 +121,13 @@ def format_ticker(x):
 # ----------------------------------------------------
 # Pestañas (Tabs)
 # ----------------------------------------------------
-tab1, tab2, tab3, tab4, tab_macro, tab_reporte = st.tabs([
+tab1, tab2, tab3, tab4, tab_macro, tab_sentimiento, tab_reporte = st.tabs([
     'Benchmarking Financiero', 
     'Perfil del Modelo de Negocio', 
     'Auditoría SEC (Datos Oficiales)', 
     'Simulador CFO (What-If)', 
     'Contexto Macro (FRED)', 
+    'Sentimiento de Mercado',
     'Reporte Ejecutivo IA'
 ])
 
@@ -380,6 +393,26 @@ with tab_macro:
         st.line_chart(df_macro)
     else:
         st.warning("Datos macroeconómicos no disponibles temporalmente.")
+
+# ====================================================
+# TAB SENTIMIENTO: Sentimiento de Mercado IA
+# ====================================================
+with tab_sentimiento:
+    st.subheader('🧠 Análisis de Sentimiento y Riesgos en Tiempo Real')
+    if not df_sec.empty:
+        nombres_disponibles_sent = df_sec['Nombre_Empresa'].unique()
+        empresa_sent = st.selectbox("Seleccione la Empresa para el Análisis de Sentimiento", nombres_disponibles_sent, key='sentimiento_selectbox')
+        ticker_real = df_sec[df_sec['Nombre_Empresa'] == empresa_sent]['Ticker'].iloc[0]
+        
+        from market_data import obtener_noticias_recientes
+        with st.spinner("Extrayendo noticias y analizando el mercado..."):
+            texto_noticias = obtener_noticias_recientes(ticker_real)
+            
+            if "No se encontraron" in texto_noticias or "No se pudo" in texto_noticias:
+                st.warning(texto_noticias)
+            else:
+                resultado = analizar_sentimiento_mercado(texto_noticias, empresa_sent)
+                st.markdown(resultado)
 
 # ====================================================
 # TAB REPORTE: Reporte Ejecutivo IA

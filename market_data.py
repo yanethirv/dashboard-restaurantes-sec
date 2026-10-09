@@ -21,3 +21,20 @@ def obtener_metricas_bursatiles(ticker):
         return {"precio": precio_str, "market_cap": mcap_str, "pe_ratio": pe_str}
     except Exception as e:
         return {"precio": "N/A", "market_cap": "N/A", "pe_ratio": "N/A"}
+
+def obtener_noticias_recientes(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        news = stock.news
+        if not news:
+            return "No se encontraron noticias recientes para este ticker."
+        
+        texto_noticias = ""
+        for i, item in enumerate(news[:5]):
+            titulo = item.get('title', 'Sin título')
+            publisher = item.get('publisher', 'Sin publicador')
+            texto_noticias += f"{i+1}. Título: {titulo}\n   Publicador: {publisher}\n\n"
+            
+        return texto_noticias
+    except Exception as e:
+        return f"No se pudo extraer noticias: {str(e)}"
