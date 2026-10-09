@@ -1,4 +1,6 @@
 import yfinance as yf
+import urllib.request
+import xml.etree.ElementTree as ET
 
 def obtener_metricas_bursatiles(ticker):
     try:
@@ -24,17 +26,22 @@ def obtener_metricas_bursatiles(ticker):
 
 def obtener_noticias_recientes(ticker):
     try:
-        stock = yf.Ticker(ticker)
-        news = stock.news
-        if not news:
-            return "No se encontraron noticias recientes para este ticker."
+        url = f'https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US'
+        # Simulamos ser un navegador web estándar para evitar el bloqueo del servidor
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
         
-        texto_noticias = ""
-        for i, item in enumerate(news[:5]):
-            titulo = item.get('title', 'Sin título')
-            publisher = item.get('publisher', 'Sin publicador')
-            texto_noticias += f"{i+1}. Título: {titulo}\n   Publicador: {publisher}\n\n"
-            
-        return texto_noticias
+        with urllib.request.urlopen(req, timeout=5) as response:
+            xml_data = response.read()
+        
+        root = ET.fromstring(xml_data)
+        noticias = []
+        
+        # Extraemos los 5 titulares más recientes
+        for item in root.findall('.//item')[:5]:
+            titulo = item.find('title').text
+            if titulo:
+                noticias.append(f"- {titulo}")
+                
+        return "\n".join(noticias) if noticias else ""
     except Exception as e:
-        return f"No se pudo extraer noticias: {str(e)}"
+        return ""
