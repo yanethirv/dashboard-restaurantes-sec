@@ -471,7 +471,5 @@ with tab_reporte:
             respuesta_limpia = st.session_state['diagnostico_consolidado'].replace('$', r'\$')
             st.markdown(respuesta_limpia)
 
- 
- s t . c a p t i o n  
- D a t o s   p r o c e s a d o s   d e s d e   l a   A P I   d e   Y a h o o   F i n a n c e   y   l a   A P I   o f i c i a l   X B R L   d e   l a   S E C .  
- 
+
+st.caption("Datos procesados desde la API de Yahoo Finance y la API oficial XBRL de la SEC.")
