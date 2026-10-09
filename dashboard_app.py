@@ -62,9 +62,15 @@ def analizar_sentimiento_mercado(texto_noticias: str, empresa: str) -> str:
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
         prompt = f"Actúa como un analista de riesgos de fondos de cobertura. Lee los siguientes titulares y noticias recientes sobre {empresa}:\n\n{texto_noticias}\n\nTu tarea: 1) Define el Sentimiento del Mercado actual en una palabra (Alcista, Bajista o Neutral). 2) Enumera en 3 viñetas muy concisas los principales riesgos, retos u oportunidades operativas que enfrenta la empresa según estas noticias."
-        response = model.generate_content(prompt)
+        
+        try:
+            model = genai.GenerativeModel("gemini-1.5-flash-latest")
+            response = model.generate_content(prompt)
+        except Exception:
+            model = genai.GenerativeModel("gemini-pro")
+            response = model.generate_content(prompt)
+            
         return response.text
     except Exception as e:
         return f"Error en el análisis de sentimiento: {e}"
