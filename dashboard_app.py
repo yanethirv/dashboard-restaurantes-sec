@@ -126,6 +126,9 @@ if 'Nombre_Empresa' in df_fin.columns:
 else:
     ticker_a_nombre = {}
 
+# Asignar Nombre_Empresa globalmente a df_sec para evitar KeyErrors en todo el archivo
+df_sec['Nombre_Empresa'] = df_sec['Ticker'].map(ticker_a_nombre).fillna(df_sec['Ticker'])
+
 def format_ticker(x):
     nombre = ticker_a_nombre.get(x, x)
     return f"{x} - {nombre}" if nombre != x else x
@@ -146,7 +149,6 @@ if not selected_tickers:
 
 df_filtered = df_fin[df_fin['Ticker'].isin(selected_tickers)]
 df_sec_filtered = df_sec[df_sec['Ticker'].isin(selected_tickers)].copy()
-df_sec_filtered['Nombre_Empresa'] = df_sec_filtered['Ticker'].map(ticker_a_nombre).fillna(df_sec_filtered['Ticker'])
 nombres_filtrados = df_sec_filtered['Nombre_Empresa'].unique()
 
 # ----------------------------------------------------
@@ -354,7 +356,7 @@ with tab4:
         # Seleccionar empresa
         empresa_sel = st.selectbox("Seleccione la Empresa para Simulación", nombres_filtrados)
         
-        df_empresa = df_sec[df_sec['Nombre_Empresa'] == empresa_sel].iloc[0]
+        df_empresa = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == empresa_sel].iloc[0]
         
         current_rev = df_empresa['Revenues']
         current_cogs = df_empresa['CostOfGoodsAndServicesSold']
@@ -436,7 +438,7 @@ with tab_reporte:
                         superprompt = f.read()
                         
                     # 3. Preparar datos de contexto
-                    df_sec_ia = df_sec[df_sec['Nombre_Empresa'] == empresa_ia].iloc[0].to_dict()
+                    df_sec_ia = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == empresa_ia].iloc[0].to_dict()
                     
                     # Para finanzas, tomamos el año más reciente de esa empresa
                     df_fin_empresa = df_fin[df_fin['Nombre_Empresa'] == empresa_ia]
@@ -525,7 +527,7 @@ with tab_reporte:
                 
             with tab_mercado:
                 st.subheader(f'📈 Valoración Bursátil (Tiempo Real)')
-                ticker_real = df_sec[df_sec['Nombre_Empresa'] == empresa_ia]['Ticker'].iloc[0]
+                ticker_real = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == empresa_ia]['Ticker'].iloc[0]
                 from market_data import obtener_metricas_bursatiles
                 metricas = obtener_metricas_bursatiles(ticker_real) 
                 
