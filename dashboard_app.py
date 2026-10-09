@@ -9,6 +9,7 @@ import io
 import re
 import zipfile
 from market_data import obtener_metricas_bursatiles
+from macro_data import obtener_inflacion_alimentos
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -424,7 +425,7 @@ with tab5:
             df_sec_ia = st.session_state['df_sec_ia']
             df_fin_ia = st.session_state['df_fin_ia']
             
-            tab_ia, tab_visual, tab_mercado, tab_consumo = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo'])
+            tab_ia, tab_visual, tab_mercado, tab_consumo, tab_macro = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo', 'Contexto Macro (FRED)'])
             
             with tab_ia:
                 respuesta_limpia = texto_ia.replace('$', r'\$')
@@ -500,6 +501,15 @@ with tab5:
                     st.caption("Gráfico de popularidad de la marca basado en el volumen de búsquedas de Google en los últimos 12 meses (0-100)")
                 else:
                     st.warning("Datos de tendencias no disponibles o límite de peticiones alcanzado (Rate Limit).")
+                    
+            with tab_macro:
+                st.subheader('🇺🇸 Inflación de Alimentos (Últimos 5 años)')
+                st.markdown('Comprende la presión sobre los Costos de Venta (COGS) observando el Índice de Precios al Consumidor para Alimentos de la Reserva Federal.')
+                df_macro = obtener_inflacion_alimentos()
+                if not df_macro.empty:
+                    st.line_chart(df_macro)
+                else:
+                    st.warning('Datos macroeconómicos no disponibles temporalmente.')
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
