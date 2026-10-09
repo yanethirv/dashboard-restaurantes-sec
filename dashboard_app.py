@@ -171,91 +171,91 @@ with tab1:
     idx_latest = df_filtered.groupby('Ticker')['Año'].idxmax()
     df_latest = df_filtered.loc[idx_latest].sort_values(by='Ingresos_Totales', ascending=False)
 
-        # 1. Tarjetas
-        st.subheader("Márgenes Netos (Último Año)")
-        
-        items_per_row = 4
-        rows = list(df_latest.iterrows())
-        
-        for i in range(0, len(rows), items_per_row):
-            cols = st.columns(items_per_row)
-            chunk = rows[i:i + items_per_row]
-            for col, (idx, row) in zip(cols, chunk):
-                ticker = row['Ticker']
-                margen = row['Margen_Neto_porcentual']
-                
-                # Obtener nombre corporativo completo
-                nombre_completo = ticker_a_nombre.get(ticker, ticker)
-                
-                # Limpiar el nombre para que sea más corto en la tarjeta
-                nombre_corto = nombre_completo.replace(', Inc.', '').replace(' Inc.', '').replace(' Corporation', '')
-                if len(nombre_corto) > 18:
-                    nombre_corto = nombre_corto[:15] + "..."
-                
-                # Renderizar con tooltip (help)
-                col.metric(
-                    label=f"Margen {nombre_corto}", 
-                    value=f"{margen:.2f}%",
-                    help=nombre_completo
-                )
+    # 1. Tarjetas
+    st.subheader("Márgenes Netos (Último Año)")
+    
+    items_per_row = 4
+    rows = list(df_latest.iterrows())
+    
+    for i in range(0, len(rows), items_per_row):
+        cols = st.columns(items_per_row)
+        chunk = rows[i:i + items_per_row]
+        for col, (idx, row) in zip(cols, chunk):
+            ticker = row['Ticker']
+            margen = row['Margen_Neto_porcentual']
+            
+            # Obtener nombre corporativo completo
+            nombre_completo = ticker_a_nombre.get(ticker, ticker)
+            
+            # Limpiar el nombre para que sea más corto en la tarjeta
+            nombre_corto = nombre_completo.replace(', Inc.', '').replace(' Inc.', '').replace(' Corporation', '')
+            if len(nombre_corto) > 18:
+                nombre_corto = nombre_corto[:15] + "..."
+            
+            # Renderizar con tooltip (help)
+            col.metric(
+                label=f"Margen {nombre_corto}", 
+                value=f"{margen:.2f}%",
+                help=nombre_completo
+            )
 
-        st.divider()
+    st.divider()
 
-        # 2. Gráfico de Barras
-        st.subheader("Ingresos Totales vs Utilidad Neta (Último Año)")
-        
-        # Preparar dataframe para plot
-        if 'Nombre_Empresa' in df_latest.columns:
-            df_plot = df_latest[['Ticker', 'Nombre_Empresa', 'Ingresos_Totales', 'Utilidad_Neta']].copy()
-            df_plot.columns = ['Ticker', 'Nombre_Empresa', 'Ingresos Totales', 'Utilidad Neta']
-            df_melted = df_plot.melt(id_vars=['Ticker', 'Nombre_Empresa'], var_name='Métrica', value_name='Monto ($)')
-        else:
-            df_plot = df_latest[['Ticker', 'Ingresos_Totales', 'Utilidad_Neta']].copy()
-            df_plot.columns = ['Ticker', 'Ingresos Totales', 'Utilidad Neta']
-            df_melted = df_plot.melt(id_vars='Ticker', var_name='Métrica', value_name='Monto ($)')
+    # 2. Gráfico de Barras
+    st.subheader("Ingresos Totales vs Utilidad Neta (Último Año)")
+    
+    # Preparar dataframe para plot
+    if 'Nombre_Empresa' in df_latest.columns:
+        df_plot = df_latest[['Ticker', 'Nombre_Empresa', 'Ingresos_Totales', 'Utilidad_Neta']].copy()
+        df_plot.columns = ['Ticker', 'Nombre_Empresa', 'Ingresos Totales', 'Utilidad Neta']
+        df_melted = df_plot.melt(id_vars=['Ticker', 'Nombre_Empresa'], var_name='Métrica', value_name='Monto ($)')
+    else:
+        df_plot = df_latest[['Ticker', 'Ingresos_Totales', 'Utilidad_Neta']].copy()
+        df_plot.columns = ['Ticker', 'Ingresos Totales', 'Utilidad Neta']
+        df_melted = df_plot.melt(id_vars='Ticker', var_name='Métrica', value_name='Monto ($)')
 
-        fig_bar = px.bar(
-            df_melted, 
-            x='Nombre_Empresa' if 'Nombre_Empresa' in df_melted.columns else 'Ticker', 
-            y='Monto ($)', 
-            color='Métrica', 
-            barmode='group',
-            text_auto='.2s', 
-            color_discrete_sequence=['#1f77b4', '#2ca02c'],
-            hover_data={'Ticker': True} if 'Nombre_Empresa' in df_melted.columns else {}
-        )
-        fig_bar.update_layout(xaxis_title="Empresa", yaxis_title="Monto en USD", hovermode="x unified")
-        fig_bar.update_traces(textposition="outside")
-        st.plotly_chart(fig_bar, use_container_width=True)
+    fig_bar = px.bar(
+        df_melted, 
+        x='Nombre_Empresa' if 'Nombre_Empresa' in df_melted.columns else 'Ticker', 
+        y='Monto ($)', 
+        color='Métrica', 
+        barmode='group',
+        text_auto='.2s', 
+        color_discrete_sequence=['#1f77b4', '#2ca02c'],
+        hover_data={'Ticker': True} if 'Nombre_Empresa' in df_melted.columns else {}
+    )
+    fig_bar.update_layout(xaxis_title="Empresa", yaxis_title="Monto en USD", hovermode="x unified")
+    fig_bar.update_traces(textposition="outside")
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-        st.divider()
+    st.divider()
 
-        # 3. Gráfico de Tendencia Histórica
-        st.subheader("Tendencia Histórica: Utilidad Neta")
-        df_history = df_filtered.sort_values(by='Año')
-        fig_line = px.line(
-            df_history, 
-            x='Año', 
-            y='Utilidad_Neta', 
-            color='Nombre_Empresa' if 'Nombre_Empresa' in df_history.columns else 'Ticker', 
-            markers=True,
-            title="Evolución de la Utilidad Neta a lo largo de los años",
-            labels={'Utilidad_Neta': 'Utilidad Neta (USD)'},
-            hover_data={'Ticker': True} if 'Nombre_Empresa' in df_history.columns else {}
-        )
-        fig_line.update_layout(xaxis=dict(tickmode='linear', dtick=1), hovermode="x unified")
-        st.plotly_chart(fig_line, use_container_width=True)
+    # 3. Gráfico de Tendencia Histórica
+    st.subheader("Tendencia Histórica: Utilidad Neta")
+    df_history = df_filtered.sort_values(by='Año')
+    fig_line = px.line(
+        df_history, 
+        x='Año', 
+        y='Utilidad_Neta', 
+        color='Nombre_Empresa' if 'Nombre_Empresa' in df_history.columns else 'Ticker', 
+        markers=True,
+        title="Evolución de la Utilidad Neta a lo largo de los años",
+        labels={'Utilidad_Neta': 'Utilidad Neta (USD)'},
+        hover_data={'Ticker': True} if 'Nombre_Empresa' in df_history.columns else {}
+    )
+    fig_line.update_layout(xaxis=dict(tickmode='linear', dtick=1), hovermode="x unified")
+    st.plotly_chart(fig_line, use_container_width=True)
 
-        # 4. Tabla de datos
-        with st.expander("Ver Histórico de Datos Crudos (Tabla)"):
-            st.dataframe(
-                df_filtered.style.format({
-                    "Ingresos_Totales": "${:,.0f}",
-                    "Gastos_Operativos": "${:,.0f}",
-                    "Utilidad_Neta": "${:,.0f}",
-                    "Margen_Neto_porcentual": "{:.2f}%",
-                    "Año": "{:d}"
-                }),
+    # 4. Tabla de datos
+    with st.expander("Ver Histórico de Datos Crudos (Tabla)"):
+        st.dataframe(
+            df_filtered.style.format({
+                "Ingresos_Totales": "${:,.0f}",
+                "Gastos_Operativos": "${:,.0f}",
+                "Utilidad_Neta": "${:,.0f}",
+                "Margen_Neto_porcentual": "{:.2f}%",
+                "Año": "{:d}"
+            }),
                 use_container_width=True
             )
 
