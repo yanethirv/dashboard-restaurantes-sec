@@ -405,27 +405,6 @@ with tab_macro:
     else:
         st.warning("Datos macroeconómicos no disponibles temporalmente.")
 
-# ====================================================
-# TAB SENTIMIENTO: Sentimiento de Mercado IA
-# ====================================================
-'''
-with tab_sentimiento:
-    st.subheader('🧠 Análisis de Sentimiento y Riesgos en Tiempo Real')
-    if not df_sec.empty:
-        nombres_disponibles_sent = df_sec['Nombre_Empresa'].unique()
-        empresa_sent = st.selectbox("Seleccione la Empresa para el Análisis de Sentimiento", nombres_disponibles_sent, key='sentimiento_selectbox')
-        ticker_real = df_sec[df_sec['Nombre_Empresa'] == empresa_sent]['Ticker'].iloc[0]
-        
-        from market_data import obtener_noticias_recientes
-        with st.spinner("Extrayendo noticias y analizando el mercado..."):
-            texto_noticias = obtener_noticias_recientes(ticker_real)
-            
-            if "No se encontraron" in texto_noticias or "No se pudo" in texto_noticias:
-                st.warning(texto_noticias)
-            else:
-                resultado = analizar_sentimiento_mercado(texto_noticias, empresa_sent)
-                st.markdown(resultado)
-'''
 
 # ====================================================
 # TAB REPORTE: Reporte Ejecutivo IA
