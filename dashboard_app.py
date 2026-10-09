@@ -133,13 +133,12 @@ def format_ticker(x):
 # ----------------------------------------------------
 # Pestañas (Tabs)
 # ----------------------------------------------------
-tab1, tab2, tab3, tab4, tab_macro, tab_sentimiento, tab_reporte = st.tabs([
+tab1, tab2, tab3, tab4, tab_macro, tab_reporte = st.tabs([
     'Benchmarking Financiero', 
     'Perfil del Modelo de Negocio', 
     'Auditoría SEC (Datos Oficiales)', 
     'Simulador CFO (What-If)', 
     'Contexto Macro (FRED)', 
-    'Sentimiento de Mercado',
     'Reporte Ejecutivo IA'
 ])
 
@@ -409,6 +408,7 @@ with tab_macro:
 # ====================================================
 # TAB SENTIMIENTO: Sentimiento de Mercado IA
 # ====================================================
+'''
 with tab_sentimiento:
     st.subheader('🧠 Análisis de Sentimiento y Riesgos en Tiempo Real')
     if not df_sec.empty:
@@ -425,6 +425,7 @@ with tab_sentimiento:
             else:
                 resultado = analizar_sentimiento_mercado(texto_noticias, empresa_sent)
                 st.markdown(resultado)
+'''
 
 # ====================================================
 # TAB REPORTE: Reporte Ejecutivo IA
