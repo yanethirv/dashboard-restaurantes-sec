@@ -130,6 +130,24 @@ def format_ticker(x):
     nombre = ticker_a_nombre.get(x, x)
     return f"{x} - {nombre}" if nombre != x else x
 
+st.sidebar.header("Filtros Interactivos")
+all_tickers = df_fin['Ticker'].unique().tolist()
+
+selected_tickers = st.sidebar.multiselect(
+    "Selecciona las Empresas (Tickers):",
+    options=all_tickers,
+    default=all_tickers,
+    format_func=format_ticker
+)
+
+if not selected_tickers:
+    st.warning("Por favor, selecciona al menos una empresa en el menú lateral.")
+    st.stop()
+
+df_filtered = df_fin[df_fin['Ticker'].isin(selected_tickers)]
+df_sec_filtered = df_sec[df_sec['Ticker'].isin(selected_tickers)]
+nombres_filtrados = df_sec_filtered['Nombre_Empresa'].unique()
+
 # ----------------------------------------------------
 # Pestañas (Tabs)
 # ----------------------------------------------------
@@ -149,24 +167,9 @@ with tab1:
     st.markdown("Comparativa de métricas clave (Último Año Fiscal Completo) y tendencias históricas.")
 
 
-    st.sidebar.header("Filtros Interactivos")
-    all_tickers = df_fin['Ticker'].unique().tolist()
-
-    selected_tickers = st.sidebar.multiselect(
-        "Selecciona las Empresas (Tickers):",
-        options=all_tickers,
-        default=all_tickers,
-        format_func=format_ticker
-    )
-
-    if not selected_tickers:
-        st.warning("Por favor, selecciona al menos una empresa en el menú lateral.")
-    else:
-        df_filtered = df_fin[df_fin['Ticker'].isin(selected_tickers)]
-        
-        # DataFrame con solo el año más reciente por empresa
-        idx_latest = df_filtered.groupby('Ticker')['Año'].idxmax()
-        df_latest = df_filtered.loc[idx_latest].sort_values(by='Ingresos_Totales', ascending=False)
+    # DataFrame con solo el año más reciente por empresa
+    idx_latest = df_filtered.groupby('Ticker')['Año'].idxmax()
+    df_latest = df_filtered.loc[idx_latest].sort_values(by='Ingresos_Totales', ascending=False)
 
         # 1. Tarjetas
         st.subheader("Márgenes Netos (Último Año)")
@@ -262,17 +265,19 @@ with tab1:
 with tab2:
     if df_prof.empty:
         st.info("No se han extraído los perfiles. Por favor, asegúrate de haber ejecutado el extractor.")
-    elif not selected_tickers:
-        st.warning("Por favor selecciona al menos una empresa en el menú lateral para ver su perfil")
     else:
         st.markdown("### Análisis Cualitativo y de Valoración")
         
         # Selector de empresa basado en la selección del menú lateral
-        selected_prof_ticker = st.selectbox(
+        # Usamos nombres en lugar de tickers como pidió el usuario
+        selected_prof_name = st.selectbox(
             "Elige una empresa para analizar su perfil:",
-            options=selected_tickers,
-            format_func=format_ticker
+            options=nombres_filtrados,
+            key='prof_selectbox'
         )
+        
+        # Obtener el ticker a partir del nombre
+        selected_prof_ticker = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == selected_prof_name]['Ticker'].iloc[0]
         
         # Extraer info de la empresa seleccionada
         prof_data = df_prof[df_prof['Ticker'] == selected_prof_ticker].iloc[0]
@@ -310,9 +315,9 @@ with tab3:
         
         st.subheader("Ingresos Oficiales vs Costos Directos")
         
-        # Sincronizar Orden y Nombres Completos
-        df_sec['Nombre_Empresa'] = df_sec['Ticker'].map(ticker_a_nombre).fillna(df_sec['Ticker'])
-        df_sec_sorted = df_sec.sort_values(by='Revenues', ascending=False)
+        # Sincronizar Orden y Nombres Completos usando el dataframe filtrado
+        df_sec_filtered['Nombre_Empresa'] = df_sec_filtered['Ticker'].map(ticker_a_nombre).fillna(df_sec_filtered['Ticker'])
+        df_sec_sorted = df_sec_filtered.sort_values(by='Revenues', ascending=False)
         
         # Preparar datos para Plotly
         df_sec_plot = df_sec_sorted[['Ticker', 'Nombre_Empresa', 'Revenues', 'CostOfGoodsAndServicesSold']].copy()
@@ -345,10 +350,9 @@ with tab4:
     st.header("Simulador CFO (What-If)")
     st.markdown("Ajuste las palancas operativas para proyectar el impacto en la rentabilidad (EBITDA).")
     
-    if not df_sec.empty:
+    if not df_sec_filtered.empty:
         # Seleccionar empresa
-        nombres_disponibles = df_sec['Nombre_Empresa'].unique()
-        empresa_sel = st.selectbox("Seleccione la Empresa para Simulación", nombres_disponibles)
+        empresa_sel = st.selectbox("Seleccione la Empresa para Simulación", nombres_filtrados)
         
         df_empresa = df_sec[df_sec['Nombre_Empresa'] == empresa_sel].iloc[0]
         
@@ -413,9 +417,8 @@ with tab_reporte:
     st.header("Diagnóstico Forense CFO impulsado por IA")
     st.markdown("Genera un análisis narrativo profundo utilizando la taxonomía oficial de la SEC y los KPIs financieros.")
     
-    if not df_sec.empty and not df_fin.empty:
-        nombres_disponibles_ia = df_sec['Nombre_Empresa'].unique()
-        empresa_ia = st.selectbox("Seleccione la Empresa para el Diagnóstico IA", nombres_disponibles_ia, key='ia_selectbox')
+    if not df_sec_filtered.empty and not df_filtered.empty:
+        empresa_ia = st.selectbox("Seleccione la Empresa para el Diagnóstico IA", nombres_filtrados, key='ia_selectbox')
         
         if st.button("Generar Diagnóstico Forense CFO", type="primary"):
             # 1. Configurar API Key
