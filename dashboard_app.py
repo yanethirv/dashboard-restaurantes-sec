@@ -145,7 +145,8 @@ if not selected_tickers:
     st.stop()
 
 df_filtered = df_fin[df_fin['Ticker'].isin(selected_tickers)]
-df_sec_filtered = df_sec[df_sec['Ticker'].isin(selected_tickers)]
+df_sec_filtered = df_sec[df_sec['Ticker'].isin(selected_tickers)].copy()
+df_sec_filtered['Nombre_Empresa'] = df_sec_filtered['Ticker'].map(ticker_a_nombre).fillna(df_sec_filtered['Ticker'])
 nombres_filtrados = df_sec_filtered['Nombre_Empresa'].unique()
 
 # ----------------------------------------------------
@@ -316,7 +317,6 @@ with tab3:
         st.subheader("Ingresos Oficiales vs Costos Directos")
         
         # Sincronizar Orden y Nombres Completos usando el dataframe filtrado
-        df_sec_filtered['Nombre_Empresa'] = df_sec_filtered['Ticker'].map(ticker_a_nombre).fillna(df_sec_filtered['Ticker'])
         df_sec_sorted = df_sec_filtered.sort_values(by='Revenues', ascending=False)
         
         # Preparar datos para Plotly
