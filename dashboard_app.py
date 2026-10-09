@@ -415,142 +415,63 @@ with tab_reporte:
     st.markdown("Genera un análisis narrativo profundo utilizando la taxonomía oficial de la SEC y los KPIs financieros.")
     
     if not df_sec_filtered.empty and not df_filtered.empty:
-        for empresa_ia in nombres_filtrados:
-            st.subheader(empresa_ia)
-        
-            if st.button(f"Generar Diagnóstico Forense - {empresa_ia}", type="primary", key=f"btn_ia_{empresa_ia}"):
-                # 1. Configurar API Key
+        if st.button("Generar Diagnóstico Forense Consolidado", type="primary"):
+            # 1. Configurar API Key
+            try:
+                api_key = st.secrets["GEMINI_API_KEY"]
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+            except Exception:
+                st.error("No se encontró 'GEMINI_API_KEY' en secrets. Por favor configure sus st.secrets (.streamlit/secrets.toml).")
+                st.stop()
+
+            with st.spinner("El motor de IA está redactando el análisis financiero comparativo..."):
                 try:
-                    api_key = st.secrets["GEMINI_API_KEY"]
-                    genai.configure(api_key=api_key)
-                except Exception:
-                    st.error("No se encontró 'GEMINI_API_KEY' en secrets. Por favor configure sus st.secrets (.streamlit/secrets.toml).")
-                    st.stop()
+                    # 2. Leer Superprompt
+                    with open("SUPERPROMPT_Analisis_Financiero_PyG.md", "r", encoding="utf-8") as f:
+                        superprompt = f.read()
 
-                with st.spinner("El motor de IA está redactando el análisis financiero..."):
-                    try:
-                        # 2. Leer Superprompt
-                        with open("SUPERPROMPT_Analisis_Financiero_PyG.md", "r", encoding="utf-8") as f:
-                            superprompt = f.read()
-
-                        # 3. Preparar datos de contexto
+                    # 3. Preparar datos de contexto unificado
+                    contexto_unificado = {}
+                    for empresa_ia in nombres_filtrados:
                         df_sec_ia = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == empresa_ia].iloc[0].to_dict()
-
+                        
                         # Para finanzas, tomamos el año más reciente de esa empresa
                         df_fin_empresa = df_fin[df_fin['Nombre_Empresa'] == empresa_ia]
-                        idx_latest_fin = df_fin_empresa['Año'].idxmax()
-                        df_fin_ia = df_fin.loc[idx_latest_fin].to_dict()
-
-                        contexto_datos = {
-                            "Empresa": empresa_ia,
+                        if not df_fin_empresa.empty:
+                            idx_latest_fin = df_fin_empresa['Año'].idxmax()
+                            df_fin_ia = df_fin.loc[idx_latest_fin].to_dict()
+                        else:
+                            df_fin_ia = {}
+                            
+                        contexto_unificado[empresa_ia] = {
                             "Datos_Auditoria_SEC_10K": {k: v for k, v in df_sec_ia.items() if pd.notna(v)},
                             "KPIs_Mercado_Finanzas": {k: v for k, v in df_fin_ia.items() if pd.notna(v)}
                         }
 
-                        prompt_usuario = f"Aplica el SUPERPROMPT a los siguientes datos de {empresa_ia}:\n\n{json.dumps(contexto_datos, indent=2, ensure_ascii=False)}"
+                    import json
+                    prompt_usuario = f"Actúa como CFO. Aquí tienes los datos financieros de varias empresas del sector. Genera un único reporte ejecutivo comparando su eficiencia, márgenes y detectando cuál tiene la mejor estructura operativa:\n\n{json.dumps(contexto_unificado, indent=2, ensure_ascii=False)}"
 
-                        # 4. Generar usando caché para ahorrar llamadas a la API
-                        texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
+                    # 4. Generar usando caché para ahorrar llamadas a la API
+                    texto_ia = obtener_diagnostico_ia(superprompt, prompt_usuario)
 
-                        # Guardar en session_state
-                        st.session_state['diagnostico_actual'] = texto_ia
-                        st.session_state['empresa_actual'] = empresa_ia
-                        st.session_state['df_sec_ia'] = df_sec_ia
-                        st.session_state['df_fin_ia'] = df_fin_ia
+                    # Guardar en session_state
+                    st.session_state['diagnostico_consolidado'] = texto_ia
 
-                        # 5. Renderizar mensaje de éxito
-                        st.success("Diagnóstico generado exitosamente.")
+                    # 5. Renderizar mensaje de éxito
+                    st.success("Diagnóstico comparativo generado exitosamente.")
 
-                    except FileNotFoundError:
-                        st.error("No se encontró el archivo SUPERPROMPT_Analisis_Financiero_PyG.md.")
-                    except Exception as e:
-                        st.error(f"Error durante la generación de IA: {e}")
+                except FileNotFoundError:
+                    st.error("No se encontró el archivo SUPERPROMPT_Analisis_Financiero_PyG.md.")
+                except Exception as e:
+                    st.error(f"Error durante la generación de IA: {e}")
 
+        st.divider()
+        if st.session_state.get('diagnostico_consolidado'):
+            respuesta_limpia = st.session_state['diagnostico_consolidado'].replace('$', r'\$')
+            st.markdown(respuesta_limpia)
 
-            st.divider()
-            # Fuera del botón, renderizar las pestañas si hay datos en estado
-            if st.session_state.get('diagnostico_actual') and st.session_state.get('empresa_actual') == empresa_ia:
-                texto_ia = st.session_state['diagnostico_actual']
-                df_sec_ia = st.session_state['df_sec_ia']
-                df_fin_ia = st.session_state['df_fin_ia']
-            
-                tab_ia, tab_visual, tab_mercado, tab_consumo = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo'])
-            
-                with tab_ia:
-                    respuesta_limpia = texto_ia.replace('$', r'\$')
-                    st.markdown(respuesta_limpia)
-                
-                with tab_visual:
-                    st.subheader("Modo Visual Simplificado")
-                    st.markdown("Los datos financieros clave explicados en lenguaje sencillo para un entendimiento general.")
-                
-                    c1, c2 = st.columns(2)
-                    c3, c4 = st.columns(2)
-                
-                    rev = df_sec_ia.get('Revenues', 0)
-                    cogs = df_sec_ia.get('CostOfGoodsAndServicesSold', 0)
-                    opex = df_fin_ia.get('Gastos_Operativos', 0)
-                    net = df_fin_ia.get('Utilidad_Neta', 0)
-                
-                    c1.metric("Ingresos", f"${rev:,.0f}", help="Todo el dinero bruto que entró a la caja")
-                    c2.metric("Costos de Venta", f"${cogs:,.0f}", help="Lo que costó directamente entregar el servicio/producto")
-                    c3.metric("Gastos Operativos", f"${opex:,.0f}", help="Sueldos administrativos, rentas y mercadotecnia")
-                    c4.metric("Utilidad Neta / Margen", f"${net:,.0f}", help="Ganancia final libre de polvo y paja")
-                
-                    st.markdown("---")
-                
-                    # Gráfico de Cascada (Waterfall)
-                    fig_waterfall = go.Figure(go.Waterfall(
-                        name="P&L", orientation="v",
-                        measure=["relative", "relative", "relative", "total"],
-                        x=["Ingresos", "Costos de Venta", "Gastos Operativos", "Utilidad Neta"],
-                        textposition="outside",
-                        text=[f"${rev/1e6:,.0f}M", f"-${cogs/1e6:,.0f}M", f"-${opex/1e6:,.0f}M", f"${net/1e6:,.0f}M"],
-                        y=[rev, -cogs, -opex, net],
-                        connector={"line":{"color":"rgb(63, 63, 63)"}},
-                    ))
-                    fig_waterfall.update_layout(title="Cascada de Rentabilidad (P&L)", showlegend=False)
-                    st.plotly_chart(fig_waterfall, use_container_width=True)
-                
-                    # Narrativa de los $100
-                    if rev > 0:
-                        x_val = (cogs / rev) * 100
-                        y_val = (opex / rev) * 100
-                        z_val = (net / rev) * 100
-                        narrativa = f"Para entender el negocio de {empresa_ia}: Por cada \\$100 de ingresos generados, la empresa destina \\${x_val:,.2f} a los costos directos del servicio y \\${y_val:,.2f} a mantener su estructura operativa. Al final, retiene \\${z_val:,.2f} de ganancia pura."
-                        st.info(narrativa)
-                
-                
-                    st.divider()
-                
-                with tab_mercado:
-                    st.subheader(f'📈 Valoración Bursátil (Tiempo Real)')
-                    ticker_real = df_sec_filtered[df_sec_filtered['Nombre_Empresa'] == empresa_ia]['Ticker'].iloc[0]
-                    from market_data import obtener_metricas_bursatiles
-                    metricas = obtener_metricas_bursatiles(ticker_real) 
-                
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric("Precio Actual", metricas.get('precio', 'N/A'))
-                    col2.metric("Market Cap", metricas.get('market_cap', 'N/A'))
-                
-                    pe = metricas.get('pe_ratio', 'N/A')
-                    if isinstance(pe, (int, float)):
-                        pe = round(pe, 2)
-                    col3.metric("P/E Ratio (Trailing)", pe)
-                
-                with tab_consumo:
-                    st.subheader("📊 Termómetro de Consumo")
-                    from consumer_trends import obtener_tendencia_busqueda
-                
-                    with st.spinner("Consultando Google Trends..."):
-                        df_trends, keyword = obtener_tendencia_busqueda(empresa_ia)
-                    
-                    if not df_trends.empty:
-                        st.line_chart(df_trends[keyword])
-                        st.caption("Gráfico de popularidad de la marca basado en el volumen de búsquedas de Google en los últimos 12 meses (0-100)")
-                    else:
-                        st.warning("Datos de tendencias no disponibles o límite de peticiones alcanzado (Rate Limit).")
-    else:
-        st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
-
-st.caption("Datos procesados desde la API de Yahoo Finance y la API oficial XBRL de la SEC.")
+ 
+ s t . c a p t i o n  
+ D a t o s   p r o c e s a d o s   d e s d e   l a   A P I   d e   Y a h o o   F i n a n c e   y   l a   A P I   o f i c i a l   X B R L   d e   l a   S E C .  
+ 
