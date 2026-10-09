@@ -8,6 +8,7 @@ import json
 import io
 import re
 import zipfile
+import requests
 from market_data import obtener_metricas_bursatiles
 from macro_data import obtener_inflacion_alimentos
 
@@ -57,23 +58,28 @@ def obtener_diagnostico_ia(superprompt: str, prompt_usuario: str) -> str:
         response = model.generate_content(prompt_completo)
         return response.text
 
-@st.cache_data(show_spinner=False)
-def analizar_sentimiento_mercado(texto_noticias: str, empresa: str) -> str:
-    try:
-        api_key = st.secrets["GEMINI_API_KEY"]
-        genai.configure(api_key=api_key)
-        prompt = f"Actúa como un analista de riesgos de fondos de cobertura. Lee los siguientes titulares y noticias recientes sobre {empresa}:\n\n{texto_noticias}\n\nTu tarea: 1) Define el Sentimiento del Mercado actual en una palabra (Alcista, Bajista o Neutral). 2) Enumera en 3 viñetas muy concisas los principales riesgos, retos u oportunidades operativas que enfrenta la empresa según estas noticias."
+@st.cache_data(ttl=3600)
+def analizar_sentimiento_mercado(texto_noticias, empresa):
+    if not texto_noticias or texto_noticias.strip() == "":
+        return "No hay suficientes noticias para analizar."
         
-        try:
-            model = genai.GenerativeModel("gemini-1.5-flash-latest")
-            response = model.generate_content(prompt)
-        except Exception:
-            model = genai.GenerativeModel("gemini-pro")
-            response = model.generate_content(prompt)
-            
-        return response.text
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"] 
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        
+        prompt = f"Actúa como un analista de riesgos de fondos de cobertura. Lee las siguientes noticias sobre {empresa}:\n\n{texto_noticias}\n\nTu tarea: 1) Define el Sentimiento del Mercado actual en una palabra (Alcista, Bajista o Neutral). 2) Enumera en 3 viñetas muy concisas los principales riesgos, retos u oportunidades operativas."
+        
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        headers = {"Content-Type": "application/json"}
+        
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        
+        datos = response.json()
+        return datos['candidates'][0]['content']['parts'][0]['text']
     except Exception as e:
-        return f"Error en el análisis de sentimiento: {e}"
+        return f"Error de conexión directa con la IA: {e}"
 
 def generar_guion_diseno(empresa, metricas, diagnostico_ia):
     # Calcular y añadir la narrativa de los $100
