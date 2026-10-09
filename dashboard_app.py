@@ -109,7 +109,14 @@ def format_ticker(x):
 # ----------------------------------------------------
 # Pestañas (Tabs)
 # ----------------------------------------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs(['Benchmarking Financiero', 'Perfil del Modelo de Negocio', 'Auditoría SEC (Datos Oficiales)', 'Simulador CFO (What-If)', 'Reporte Ejecutivo IA'])
+tab1, tab2, tab3, tab4, tab_macro, tab_reporte = st.tabs([
+    'Benchmarking Financiero', 
+    'Perfil del Modelo de Negocio', 
+    'Auditoría SEC (Datos Oficiales)', 
+    'Simulador CFO (What-If)', 
+    'Contexto Macro (FRED)', 
+    'Reporte Ejecutivo IA'
+])
 
 # ====================================================
 # TAB 1: Benchmarking Financiero
@@ -361,9 +368,23 @@ with tab4:
         st.warning("Datos de la SEC no disponibles para simulación.")
 
 # ====================================================
-# TAB 5: Reporte Ejecutivo IA
+# TAB MACRO: Contexto FRED
 # ====================================================
-with tab5:
+with tab_macro: 
+    st.subheader("🌎 Contexto del Sector (Macro)")
+    st.caption("Índice de Inflación de Alimentos (Últimos 5 años). Este indicador es global y presiona los costos de toda la industria por igual.")
+    
+    from macro_data import obtener_inflacion_alimentos
+    df_macro = obtener_inflacion_alimentos()
+    if not df_macro.empty:
+        st.line_chart(df_macro)
+    else:
+        st.warning("Datos macroeconómicos no disponibles temporalmente.")
+
+# ====================================================
+# TAB REPORTE: Reporte Ejecutivo IA
+# ====================================================
+with tab_reporte:
     st.header("Diagnóstico Forense CFO impulsado por IA")
     st.markdown("Genera un análisis narrativo profundo utilizando la taxonomía oficial de la SEC y los KPIs financieros.")
     
@@ -425,7 +446,7 @@ with tab5:
             df_sec_ia = st.session_state['df_sec_ia']
             df_fin_ia = st.session_state['df_fin_ia']
             
-            tab_ia, tab_visual, tab_mercado, tab_consumo, tab_macro = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo', 'Contexto Macro (FRED)'])
+            tab_ia, tab_visual, tab_mercado, tab_consumo = st.tabs(['Diagnóstico CFO (Técnico)', 'Resumen Ejecutivo (Visual)', 'Mercado en Vivo', 'Termómetro de Consumo'])
             
             with tab_ia:
                 respuesta_limpia = texto_ia.replace('$', r'\$')
@@ -501,17 +522,6 @@ with tab5:
                     st.caption("Gráfico de popularidad de la marca basado en el volumen de búsquedas de Google en los últimos 12 meses (0-100)")
                 else:
                     st.warning("Datos de tendencias no disponibles o límite de peticiones alcanzado (Rate Limit).")
-                    
-            with tab_macro: 
-                st.subheader("🌎 Contexto del Sector (Macro)")
-                st.caption("Índice de Inflación de Alimentos (Últimos 5 años). Este indicador es global y presiona los costos de toda la industria por igual.")
-                
-                from macro_data import obtener_inflacion_alimentos
-                df_macro = obtener_inflacion_alimentos()
-                if not df_macro.empty:
-                    st.line_chart(df_macro)
-                else:
-                    st.warning("Datos macroeconómicos no disponibles temporalmente.")
     else:
         st.warning("Se requieren los datos financieros y de la SEC para generar el reporte.")
 
