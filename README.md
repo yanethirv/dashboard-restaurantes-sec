@@ -1,46 +1,28 @@
-# 📊 Dashboard de Benchmarking Financiero e IA Forense: Sector Restaurantes
+# 📊 Benchmarking Financiero con IA: Sector Restaurantes
 
-Un ecosistema integral de análisis financiero y *Business Intelligence* diseñado para auditar, comparar y diagnosticar empresas del sector de restaurantes que cotizan en bolsa. Esta plataforma extrae datos oficiales de la SEC y los procesa a través de un motor de inferencia matemática propio, inyectando los resultados en un modelo de lenguaje de última generación (LLM) para generar reportes ejecutivos automatizados de nivel de Director Financiero (CFO).
+Una plataforma analítica avanzada construida con Streamlit que combina extracción de datos oficiales de la SEC (XBRL), datos de mercado en tiempo real y análisis generativo impulsado por IA para realizar auditorías y simulaciones financieras (CFO).
 
-🚀 **Despliegue en vivo:** [Ver el Dashboard en Streamlit](https://dashboard-restaurantes-sec.streamlit.app/)
+## 🚀 Características Principales
 
----
+* **Filtro Global Sincronizado:** Panel lateral (*sidebar*) que controla la reactividad de todo el *dashboard*. Selecciona múltiples empresas y todas las pestañas se actualizarán en cascada.
+* **Auditoría SEC (XBRL):** Extracción directa de los formularios 10-K para visualizar ingresos y costos auditados.
+* **Simulador CFO (What-If):** Modelado de escenarios dinámico con *sliders* iterativos por empresa para proyectar el impacto en el EBITDA y calcular el Grado de Apalancamiento Operativo (DOL).
+* **Análisis Macro:** Integración con la API de FRED para contextualizar los resultados contra la inflación de alimentos.
+* **Reporte Ejecutivo IA:** Un motor de inferencia conectado directamente a Gemini 1.5 Flash (vía REST API) que procesa los datos financieros de las empresas seleccionadas y genera un único diagnóstico forense comparativo.
 
-## 🏗️ Arquitectura y Stack Tecnológico
+## 🛠️ Arquitectura y Tecnologías
 
-El proyecto está construido bajo una arquitectura *end-to-end* que abarca desde la extracción y limpieza de datos hasta el despliegue reactivo en la nube:
+* **Frontend / Framework:** Streamlit
+* **Procesamiento de Datos:** Pandas, Numpy
+* **Fuentes de Datos:** SEC REST API, Yahoo Finance (RSS feed bypass), FRED API
+* **Inteligencia Artificial:** Google Gemini API (Integración directa vía peticiones HTTP `requests` para máxima resiliencia en la nube).
 
-*   **Frontend y Orquestación:** [Streamlit](https://streamlit.io/) (Interfaz de usuario reactiva, gestión de estado y sistema de caché `@st.cache_data` para optimización de rendimiento y cuotas de API).
-*   **Procesamiento de Datos y Motor Matemático:** `Python 3.11`, `Pandas`, `NumPy`. (Procesamiento de datos tabulares, cálculos de KPIs de P&L, márgenes cruzados y modelado de escenarios).
-*   **Extracción de Datos Financieros:** `yfinance`, Datos XBRL auditados de la SEC (Securities and Exchange Commission).
-*   **Inteligencia Artificial Generativa:** API de Google Gemini (`google-generativeai`), utilizando modelos estructurados optimizados (`gemini-1.5-flash`) para análisis forense avanzado sin alucinaciones, mediante estrategias de *Superprompting*.
-*   **Visualización Dinámica:** `Plotly` (Gráficos interactivos de series de tiempo, barras agrupadas y análisis de dispersión).
+## ⚙️ Configuración y Despliegue
 
----
-
-## 🎯 Funcionalidades Principales
-
-### 1. Perfilado de Modelos de Negocio y Auditoría SEC
-*   Análisis comparativo (*Benchmarking*) de las principales cadenas de restaurantes (ej. Chipotle, Domino's, McDonald's).
-*   Visualización interactiva de ingresos históricos, costos de ventas (COGS), gastos operativos (SG&A) y utilidades netas basadas en reportes 10-K.
-
-### 2. Simulador CFO (What-If Analysis)
-*   Motor de sensibilidad que permite alterar variables macro y microeconómicas (inflación de insumos, elasticidad de precios, optimización laboral).
-*   Cálculo en tiempo real del impacto en el margen de contribución y el punto de equilibrio operativo.
-
-### 3. Diagnóstico Forense CFO impulsado por IA
-Un consultor financiero automatizado que recibe la estructura contable de la empresa seleccionada y genera un informe narrativo detallado que incluye:
-*   **Radiografía Estructural:** Análisis vertical y horizontal de los estados de resultados.
-*   **Detección de Fugas de Capital:** Identificación de riesgos operativos mediante semaforización.
-*   **Roadmap Estratégico:** Planes de acción a corto y mediano plazo para protección de márgenes y optimización de flujos de caja.
-
----
-
-## ⚙️ Instalación y Despliegue Local
-
-Para ejecutar este proyecto en un entorno local y explorar el código fuente, sigue estos pasos:
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone [https://github.com/yanethirv/dashboard-restaurantes-sec](https://github.com/yanethirv/dashboard-restaurantes-sec)
-   cd dashboard-restaurantes-sec
+1. Clonar el repositorio.
+2. Instalar dependencias: `pip install -r requirements.txt`
+3. Configurar los secretos (Variables de Entorno). En Streamlit Cloud, agrega tu clave en `Settings > Secrets`:
+   ```toml
+   GEMINI_API_KEY = "AIzaSy_TU_CLAVE_AQUI"
+   ```
+4. Ejecutar localmente: `streamlit run dashboard_app.py`
